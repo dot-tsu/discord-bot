@@ -7,14 +7,14 @@ Just drop a song name or link in the assigned text channel and it'll start playi
 
 ## Features
 
-- **Music Playback**: Plays YouTube and Spotify links/queries.
+- **Music Playback**: Plays YouTube links and search terms. Spotify links work too: the metadata comes from Spotify and the audio plays from YouTube.
 - **Skip**: Just type "skip" (while tagging the bot) to skip the current track.
 - **Auto Config**: The bot remembers which text channel to listen to.
 - **Welcome Audio**: Plays `assets/welcome.mp3` when first joining a guild's voice channel.
 
 ## Tech Stack
 
-- **[Node.js](https://nodejs.org/)**: 22
+- **[Node.js](https://nodejs.org/)**: 24
 - **Discord**: [discord.js](https://discord.js.org/) + [distube](https://distube.js.org/)
 - **Plugins**: YouTube + Spotify
 - **Multimedia**: [ffmpeg](https://ffmpeg.org/)

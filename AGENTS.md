@@ -2,15 +2,15 @@
 
 ## Run Commands
 
-- `bun install` - Install dependencies (Bun is the package manager)
-- `npm start` - Production run (Node 24 runtime)
-- `npm run dev` - Development with `--watch` flag for auto-reload
-- `npm run lint` - Linting via antfu/eslint-config + `tsc --noEmit`
+- `bun install` - Install dependencies (Bun is the package manager and script runner)
+- `bun run start` - Production run
+- `bun run dev` - Development with `--watch` flag for auto-reload
+- `bun run lint` - Linting via antfu/eslint-config + `tsc --noEmit`
 - `bun test` - Run tests
 
 ## Requirements
 
-- **Node.js 24** (required, per `package.json` engines; strips TypeScript natively, no build step)
+- **Node.js 24** (required, per `package.json` engines; the runtime is Node, not Bun - distube is incompatible with Bun)
 - **FFmpeg** - Must be installed separately and on PATH (not an npm dependency)
 
 ## Configuration
