@@ -27,6 +27,9 @@ export function setupMusicEvents() {
       console.info(`[Music] Now playing: ${songDisplayName(song)}`)
       void updateNowPlaying(queue, song).catch(error => console.error('[Music] Failed to update now playing:', error))
     })
-    .on(Events.FINISH, () => console.info('[Music] Queue finished'))
+    .on(Events.FINISH, (queue) => {
+      console.info('[Music] Queue finished, leaving voice')
+      player.voices.get(queue.id)?.leave()
+    })
     .on(Events.ERROR, error => console.error('[Music] DisTube error:', error))
 }

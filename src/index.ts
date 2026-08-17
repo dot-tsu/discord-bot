@@ -4,6 +4,7 @@ import { client } from './discord/client.ts'
 import { setupInteractionRouter } from './discord/route-interaction.ts'
 import { setupMessageRouter } from './discord/route-message.ts'
 import { loadSettingsStore } from './guild-settings/store.ts'
+import { setupLeaveWhenEmpty } from './music/leave-when-empty.ts'
 import { setupMusicEvents } from './music/queue-events.ts'
 import './music/player.ts'
 
@@ -18,6 +19,7 @@ async function main() {
   const store = await loadSettingsStore(SETTINGS_PATH)
 
   setupMusicEvents()
+  setupLeaveWhenEmpty()
   setupMessageRouter(store)
   setupInteractionRouter()
 
