@@ -38,10 +38,12 @@ async function downloadAudio(url: string, id: string) {
     return existing
 
   const proc = spawn('yt-dlp', ['--no-warnings', '--no-call-home', '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
+  let stderr = ''
+  proc.stderr.on('data', chunk => (stderr += chunk))
   const code = await new Promise<number>(resolve => proc.on('close', resolve))
 
   if (code !== 0)
-    throw new Error(`yt-dlp failed to download audio (exit ${code})`)
+    throw new Error(`yt-dlp failed to download ${url}: ${stderr.trim() || `exit ${code}`}`)
 
   const file = (await readdir(AUDIO_DIR)).find(name => name.startsWith(`${id}.`))
 
