@@ -46,27 +46,21 @@ Just drop a song name or link in the assigned text channel and it'll start playi
 
 1. **Install Dependencies**:
    ```bash
-   npm install
+   bun install
    ```
 
 2. **Configuration**:
-   Copy `config.example.json` to `config.json` and add your token:
-   ```json
-   {
-     "DISCORD_TOKEN": "your_bot_token"
-   }
-   ```
-   Check `src/features/messages/default-messages.js` for all available templates.
+   Set the bot token in the `DISCORD_TOKEN` environment variable.
 
 3. **Welcome Audio** (Optional):
-   Place an MP3 file at `assets/`. The bot will play this clip the first time it joins a voice channel in each session.
+   Place an MP3 file at `assets/welcome.mp3`. The bot will play this clip the first time it joins a voice channel in each session.
 
 ## Run
 
 ```bash
-npm start
+bun run start
 # or for development
-npm run dev
+bun run dev
 ```
 
 I got tired of complicated music bots, so this one just... plays the damn song.
