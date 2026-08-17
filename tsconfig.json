@@ -10,7 +10,6 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

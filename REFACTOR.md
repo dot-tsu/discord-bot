@@ -147,3 +147,4 @@ Gates are labeled **[agent]** (must pass locally before the phase is done) or **
 - No new dependencies for what a few lines cover. Media processing is the exception: never hand-roll it.
 - User-facing strings: sentence case, no jargon, English.
 - Tests live in `tests/` beside the code they cover, named after the unit, run with `bun test`. Assertions state the domain, never the current implementation's output.
+- In `.ts` files, relative import specifiers must carry the real on-disk extension (`.ts` for `.ts` files, `.js` for the `.js` tail). `tsc` will NOT catch a wrong specifier — under `nodenext` it silently remaps `.js` to `.ts`, and only Node at boot fails. Every phase's verify therefore includes `node src/index.ts`: since the ESM graph loads eagerly, a bad specifier anywhere in `src/` fails at boot with `ERR_MODULE_NOT_FOUND`.
