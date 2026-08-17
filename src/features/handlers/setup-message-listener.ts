@@ -14,8 +14,12 @@ export function setupMessageListener(store: GuildSettingsStore) {
     if (message.author?.bot)
       return
 
-    if (isConfigurationCommand(message))
-      return configureTextChannel(message, store)
+    if (isConfigurationCommand(message)) {
+      configureTextChannel(message, store)
+        .catch(error => console.error('[Config] Failed to configure channel:', error))
+
+      return
+    }
 
     if (!message.guildId)
       return

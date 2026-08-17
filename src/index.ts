@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import process from 'node:process'
 import { setupMessageListener } from '#features/handlers/setup-message-listener.ts'
 import { setupMusicEvents } from '#features/music/events/setup-music-events.ts'
@@ -5,7 +6,7 @@ import { client } from './discord/client.ts'
 import { loadSettingsStore } from './guild-settings/store.ts'
 import './music/player.ts'
 
-const SETTINGS_PATH = 'data/guilds.json'
+const SETTINGS_PATH = resolve(import.meta.dirname, '../data/guilds.json')
 
 async function main() {
   const token = process.env.DISCORD_TOKEN
