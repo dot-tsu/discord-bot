@@ -36,6 +36,8 @@ test('remove takes a number, or is null when missing or invalid', () => {
   expect(parse(`<@${BOT_ID}> remove 3`)).toEqual({ type: 'remove', index: 3 })
   expect(parse(`<@${BOT_ID}> remove`)).toEqual({ type: 'remove', index: null })
   expect(parse(`<@${BOT_ID}> remove x`)).toEqual({ type: 'remove', index: null })
+  expect(parse(`<@${BOT_ID}> remove 2.5`)).toEqual({ type: 'remove', index: null })
+  expect(parse(`<@${BOT_ID}> remove 2abc`)).toEqual({ type: 'remove', index: null })
 })
 
 test('more than one channel mention is not a config', () => {

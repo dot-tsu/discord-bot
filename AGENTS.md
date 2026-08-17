@@ -23,7 +23,6 @@
 ## Architecture
 
 - Entry point: `src/index.ts`
-- Import aliases: `#client`, `#player`, `#features/*` (defined in `package.json` imports)
 - Uses discord.js 14 + distube 5 for music playback
 - TypeScript in `.ts` files: relative imports use the `.ts` extension (Node 24 native stripping)
 - Tests run with `bun test`

@@ -7,7 +7,7 @@ import { MESSAGES } from '../messages/en.ts'
 import { playIntroIfFirstJoin } from '../music/intro.ts'
 import { queueEmbed, queueRow } from '../music/now-playing.ts'
 import { player } from '../music/player.ts'
-import { clearQueue, skipCurrent, togglePause } from '../music/queue-controls.ts'
+import { skipCurrent, togglePause } from '../music/queue-controls.ts'
 import { client } from './client.ts'
 import { configureTextChannel } from './configure-text-channel.ts'
 import { hasVoicePermissions } from './has-voice-permissions.ts'
@@ -125,7 +125,7 @@ async function runCommand(message: Message, channel: GuildTextBasedChannel, comm
       await queue.shuffle()
       break
     case 'clear':
-      await clearQueue(queue)
+      await queue.stop()
       break
   }
 

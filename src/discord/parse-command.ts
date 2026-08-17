@@ -47,9 +47,9 @@ export function parseCommand(content: string, botId: string, botMentioned: boole
     if (word !== undefined && isCommandName(word)) {
       if (word === 'remove') {
         const rawIndex = rest[0]
-        const index = rawIndex === undefined ? null : Number.parseInt(rawIndex, 10)
+        const index = rawIndex !== undefined && /^\d+$/.test(rawIndex) ? Number.parseInt(rawIndex, 10) : null
 
-        return { type: 'remove', index: Number.isNaN(index) ? null : index }
+        return { type: 'remove', index }
       }
 
       return { type: word }

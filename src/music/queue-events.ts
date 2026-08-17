@@ -8,16 +8,24 @@ export function setupMusicEvents() {
     .on(Events.ADD_SONG, (queue, song) => {
       const name = songDisplayName(song)
       console.info(`[Music] Song added to queue: ${name}`)
-      queue.textChannel?.send(MESSAGES.songAdded(name))
+
+      const textChannel = queue.textChannel
+
+      if (textChannel)
+        textChannel.send(MESSAGES.songAdded(name)).catch(error => console.error('[Music] Failed to send song added message:', error))
     })
     .on(Events.ADD_LIST, (queue, playlist) => {
       const name = playlist.name ?? playlist.url ?? 'Playlist'
       console.info(`[Music] Playlist added to queue: ${name} (${playlist.songs.length} songs)`)
-      queue.textChannel?.send(MESSAGES.playlistAdded(name, playlist.songs.length))
+
+      const textChannel = queue.textChannel
+
+      if (textChannel)
+        textChannel.send(MESSAGES.playlistAdded(name, playlist.songs.length)).catch(error => console.error('[Music] Failed to send playlist added message:', error))
     })
     .on(Events.PLAY_SONG, (queue, song) => {
       console.info(`[Music] Now playing: ${songDisplayName(song)}`)
-      void updateNowPlaying(queue, song)
+      void updateNowPlaying(queue, song).catch(error => console.error('[Music] Failed to update now playing:', error))
     })
     .on(Events.FINISH, () => console.info('[Music] Queue finished'))
     .on(Events.ERROR, error => console.error('[Music] DisTube error:', error))

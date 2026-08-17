@@ -10,10 +10,3 @@ export async function skipCurrent(queue: Queue) {
   else
     await queue.stop()
 }
-
-export async function clearQueue(queue: Queue) {
-  queue.songs.length = 0
-
-  if (!queue.stopped)
-    await queue.skip()
-}

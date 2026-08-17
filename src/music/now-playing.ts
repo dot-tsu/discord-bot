@@ -20,9 +20,15 @@ export async function updateNowPlaying(queue: Queue, song: Song) {
   const existing = nowPlayingMessages.get(queue.id)
 
   if (existing?.editable) {
-    await existing.edit({ embeds: [embed], components: [row] })
+    try {
+      await existing.edit({ embeds: [embed], components: [row] })
 
-    return
+      return
+    }
+    catch (error) {
+      console.error('[Music] Failed to edit now playing message:', error)
+      nowPlayingMessages.delete(queue.id)
+    }
   }
 
   const sent = await channel.send({ embeds: [embed], components: [row] })
