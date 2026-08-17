@@ -15,8 +15,9 @@
 
 ## Configuration
 
-- Copy `config.example.json` to `config.json` before running
-- Bot token goes in `DISCORD_TOKEN`
+- Bot token goes in the `DISCORD_TOKEN` environment variable
+- Per-guild settings are auto-persisted to `data/guilds.json` (gitignored)
+- Configure the listening channel by mentioning the bot and a channel: `@DJ #music`
 - `assets/welcome.mp3` (optional) - Played when bot first joins a voice channel per guild
 
 ## Architecture

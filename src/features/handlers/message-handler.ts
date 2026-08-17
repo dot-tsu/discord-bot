@@ -1,32 +1,33 @@
-import { CONFIG } from '#features/config/app-config.js'
+import type { Message } from 'discord.js'
 import { hasVoicePermissions } from '#features/discord/has-voice-permissions.js'
-import { playMusic } from '#features/handlers/play-music.js'
+import { playMusic } from '#features/handlers/play-music.ts'
 import { skipSong } from '#features/music/skip-song.js'
 import { ChannelType } from 'discord.js'
+import { MESSAGES } from '../../messages/en.ts'
 
-function isSkipCommand(message) {
+function isSkipCommand(message: Message) {
   const mentionsBot = message.mentions.has(message.client.user)
 
   return mentionsBot && message.content.toLowerCase().includes('skip')
 }
 
-export async function handleMessage(message) {
+export async function handleMessage(message: Message) {
   const voiceChannel = message.member?.voice?.channel ?? null
 
   if (!voiceChannel) {
-    message.reply(CONFIG.MESSAGES.ERRORS.JOIN_VOICE_CHANNEL)
+    message.reply(MESSAGES.joinVoiceChannel)
 
     return
   }
 
   if (voiceChannel.type === ChannelType.GuildStageVoice) {
-    message.reply(CONFIG.MESSAGES.ERRORS.STAGE_CHANNEL_PERMISSIONS)
+    message.reply(MESSAGES.stageChannelPermissions)
 
     return
   }
 
   if (!hasVoicePermissions(voiceChannel, message)) {
-    message.reply(CONFIG.MESSAGES.ERRORS.BOT_PERMISSIONS)
+    message.reply(MESSAGES.botPermissions)
 
     return
   }
