@@ -4,6 +4,7 @@ export const MESSAGES = {
   botPermissions: 'I need permissions to join and speak in your voice channel.',
   noResult: 'Sorry, I couldn\'t find any song matching your query.',
   playbackError: 'Sorry, I encountered an error while trying to play music.',
+  channelConfigurePermission: 'You need the Manage Channels permission to set where I listen.',
   textChannelConfigured: (channel: string) => `All set! I am now listening in ${channel}.`,
   nowPlaying: (song: string) => `Now playing: "${song}"`,
   songAdded: (song: string) => `Added "${song}" to the queue.`,
