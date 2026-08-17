@@ -50,14 +50,13 @@ Just drop a song name or link in the assigned text channel and it'll start playi
    ```
 
 2. **Configuration**:
-   Copy `config.example.json` to `config.json` and add your setup:
+   Copy `config.example.json` to `config.json` and add your token:
    ```json
    {
-     "DISCORD_TOKEN": "your_bot_token",
-     ":...other_configurations"
+     "DISCORD_TOKEN": "your_bot_token"
    }
    ```
-   Check `src/messages/default-messages.js` for all available templates.
+   Check `src/features/messages/default-messages.js` for all available templates.
 
 3. **Welcome Audio** (Optional):
    Place an MP3 file at `assets/`. The bot will play this clip the first time it joins a voice channel in each session.
