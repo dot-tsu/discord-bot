@@ -2,7 +2,7 @@
 
 ## Run Commands
 
-- `npm start` - Production run (includes `--max-old-space-size=256` memory limit)
+- `npm start` - Production run
 - `npm run dev` - Development with `--watch` flag for auto-reload
 - `npm run lint` - Linting via antfu/eslint-config
 
