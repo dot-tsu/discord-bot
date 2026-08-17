@@ -83,7 +83,7 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
   }
   catch (error) {
     if (!player.getQueue(voiceChannel.guild.id))
-      player.voices.get(voiceChannel.guild.id)?.leave()
+      await voiceChannel.guild.members.me?.voice.disconnect()
 
     if ((error as DisTubeError).errorCode === 'NO_RESULT') {
       await message.reply(MESSAGES.noResult)
