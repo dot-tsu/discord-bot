@@ -4,18 +4,17 @@
   "private": true,
   "author": ".tsu",
   "imports": {
-    "#client": "./src/client.js",
-    "#player": "./src/player.js",
+    "#client": "./src/discord/client.ts",
+    "#player": "./src/music/player.ts",
     "#features/*": "./src/features/*"
   },
-  "module": "index.js",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
-    "lint": "eslint ."
+    "start": "node src/index.ts",
+    "dev": "node --watch src/index.ts",
+    "lint": "eslint . && tsc --noEmit"
   },
   "dependencies": {
     "@discordjs/opus": "npm:mediaplex@1.0.0",
@@ -26,6 +25,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
-    "eslint": "^9.38.0"
+    "@types/node": "^26.2.0",
+    "eslint": "^9.38.0",
+    "typescript": "~5.9.0"
   }
 }

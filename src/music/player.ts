@@ -1,11 +1,9 @@
 import { YouTubePlugin } from '@distube/youtube'
+import { DisTube } from 'distube'
+import { client } from '../discord/client.ts'
 
-export const DISTUBE_OPTIONS = {
-  plugins: [new YouTubePlugin({
-    ytdlOptions: {
-      playerClients: ['ANDROID_VR', 'WEB_EMBEDDED', 'IOS', 'ANDROID', 'TV'],
-    },
-  })],
+export const player = new DisTube(client, {
+  plugins: [new YouTubePlugin()],
   emitAddListWhenCreatingQueue: true,
   emitAddSongWhenCreatingQueue: false,
   savePreviousSongs: false,
@@ -24,4 +22,4 @@ export const DISTUBE_OPTIONS = {
       },
     },
   },
-}
+})
