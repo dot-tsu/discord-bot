@@ -3,11 +3,6 @@
   "type": "module",
   "private": true,
   "author": ".tsu",
-  "imports": {
-    "#client": "./src/discord/client.ts",
-    "#player": "./src/music/player.ts",
-    "#features/*": "./src/features/*"
-  },
   "engines": {
     "node": ">=24.0.0"
   },

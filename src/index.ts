@@ -1,9 +1,10 @@
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { setupMessageListener } from '#features/handlers/setup-message-listener.ts'
-import { setupMusicEvents } from '#features/music/events/setup-music-events.ts'
 import { client } from './discord/client.ts'
+import { setupInteractionRouter } from './discord/route-interaction.ts'
+import { setupMessageRouter } from './discord/route-message.ts'
 import { loadSettingsStore } from './guild-settings/store.ts'
+import { setupMusicEvents } from './music/queue-events.ts'
 import './music/player.ts'
 
 const SETTINGS_PATH = resolve(import.meta.dirname, '../data/guilds.json')
@@ -17,7 +18,8 @@ async function main() {
   const store = await loadSettingsStore(SETTINGS_PATH)
 
   setupMusicEvents()
-  setupMessageListener(store)
+  setupMessageRouter(store)
+  setupInteractionRouter()
 
   await client.login(token)
 }
