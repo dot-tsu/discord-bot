@@ -1,7 +1,11 @@
 import { YouTubePlugin } from '@distube/youtube'
 
 export const DISTUBE_OPTIONS = {
-  plugins: [new YouTubePlugin()],
+  plugins: [new YouTubePlugin({
+    ytdlOptions: {
+      playerClients: ['ANDROID_VR', 'WEB_EMBEDDED', 'IOS', 'ANDROID', 'TV'],
+    },
+  })],
   emitAddListWhenCreatingQueue: true,
   emitAddSongWhenCreatingQueue: false,
   savePreviousSongs: false,
