@@ -55,7 +55,7 @@ function nowPlayingRow() {
   )
 }
 
-export function queueEmbed(queue: Queue, page: number) {
+export function queueView(queue: Queue, page: number) {
   const total = queue.songs.length
   const pageCount = Math.max(Math.ceil(total / QUEUE_PAGE_SIZE), 1)
   const start = (page - 1) * QUEUE_PAGE_SIZE
@@ -63,16 +63,12 @@ export function queueEmbed(queue: Queue, page: number) {
     .slice(start, start + QUEUE_PAGE_SIZE)
     .map((song, index) => `${start + index + 1}. ${songDisplayName(song)}`)
 
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setTitle(`Queue (${total} songs)`)
     .setDescription(lines.join('\n') || 'Empty')
     .setFooter({ text: `Page ${page} of ${pageCount}` })
-}
 
-export function queueRow(queue: Queue, page: number) {
-  const pageCount = Math.max(Math.ceil(queue.songs.length / QUEUE_PAGE_SIZE), 1)
-
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(`nq:prev:${page}`)
       .setLabel('Previous')
@@ -84,4 +80,6 @@ export function queueRow(queue: Queue, page: number) {
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(page >= pageCount),
   )
+
+  return { embed, row }
 }

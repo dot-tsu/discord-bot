@@ -10,7 +10,6 @@ export const MESSAGES = {
   nothingPlaying: 'Nothing is playing right now.',
   removeUsage: 'Tell me which song to remove with a number, like: remove 2.',
   removeOutOfRange: 'There is no song at that position.',
-  nowPlaying: (song: string) => `Now playing: "${song}"`,
   songAdded: (song: string) => `Added "${song}" to the queue.`,
   playlistAdded: (playlist: string, count: number) => `Added playlist "${playlist}" (${count} songs) to the queue.`,
 }

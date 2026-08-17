@@ -1,9 +1,9 @@
 import type { ActionRowBuilder, ButtonBuilder, ButtonInteraction, EmbedBuilder } from 'discord.js'
 import { Events } from 'discord.js'
 import { MESSAGES } from '../messages/en.ts'
-import { queueEmbed, queueRow } from '../music/now-playing.ts'
+import { queueView } from '../music/now-playing.ts'
 import { player } from '../music/player.ts'
-import { skipCurrent, togglePause } from '../music/queue-controls.ts'
+import { isMusicAction, runMusicAction } from '../music/queue-controls.ts'
 import { client } from './client.ts'
 
 export function setupInteractionRouter() {
@@ -43,27 +43,16 @@ async function handleNowPlayingButton(interaction: ButtonInteraction) {
   }
 
   if (action === 'queue') {
-    await interaction.reply({ embeds: [queueEmbed(queue, 1)], components: [queueRow(queue, 1)] })
+    const view = queueView(queue, 1)
+    await interaction.reply({ embeds: [view.embed], components: [view.row] })
 
     return
   }
 
-  switch (action) {
-    case 'pause':
-      await togglePause(queue)
-      break
-    case 'skip':
-      await skipCurrent(queue)
-      break
-    case 'shuffle':
-      await queue.shuffle()
-      break
-    case 'clear':
-      await queue.stop()
-      break
+  if (isMusicAction(action)) {
+    await runMusicAction(queue, action)
+    await interaction.deferUpdate()
   }
-
-  await interaction.deferUpdate()
 }
 
 async function handleQueuePageButton(interaction: ButtonInteraction) {
@@ -87,10 +76,11 @@ async function handleQueuePageButton(interaction: ButtonInteraction) {
   }
 
   const targetPage = direction === 'prev' ? page - 1 : page + 1
+  const view = queueView(queue, targetPage)
 
   await updateQueueMessage(interaction, {
-    embeds: [queueEmbed(queue, targetPage)],
-    components: [queueRow(queue, targetPage)],
+    embeds: [view.embed],
+    components: [view.row],
   })
 }
 

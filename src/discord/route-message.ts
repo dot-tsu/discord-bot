@@ -5,9 +5,9 @@ import type { Command } from './parse-command.ts'
 import { ChannelType, Events } from 'discord.js'
 import { MESSAGES } from '../messages/en.ts'
 import { playIntroIfFirstJoin } from '../music/intro.ts'
-import { queueEmbed, queueRow } from '../music/now-playing.ts'
+import { queueView } from '../music/now-playing.ts'
 import { player } from '../music/player.ts'
-import { skipCurrent, togglePause } from '../music/queue-controls.ts'
+import { runMusicAction } from '../music/queue-controls.ts'
 import { client } from './client.ts'
 import { configureTextChannel } from './configure-text-channel.ts'
 import { hasVoicePermissions } from './has-voice-permissions.ts'
@@ -44,7 +44,7 @@ export function setupMessageRouter(store: GuildSettingsStore) {
       if (command.type === 'query')
         await playQuery(message, message.channel, command.query)
       else
-        await runCommand(message, message.channel, command)
+        await runCommand(message, message.guildId, message.channel, command)
     }
     catch (error) {
       console.error('[Discord] Message handling error:', error)
@@ -82,6 +82,9 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
     })
   }
   catch (error) {
+    if (!player.getQueue(voiceChannel.guild.id))
+      player.voices.get(voiceChannel.guild.id)?.leave()
+
     if ((error as DisTubeError).errorCode === 'NO_RESULT') {
       await message.reply(MESSAGES.noResult)
 
@@ -92,8 +95,8 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
   }
 }
 
-async function runCommand(message: Message, channel: GuildTextBasedChannel, command: Exclude<Command, { type: 'configure' } | { type: 'query' }>) {
-  const queue = player.getQueue(message.guildId ?? '')
+async function runCommand(message: Message, guildId: string, channel: GuildTextBasedChannel, command: Exclude<Command, { type: 'configure' } | { type: 'query' }>) {
+  const queue = player.getQueue(guildId)
 
   if (!queue) {
     await message.reply(MESSAGES.nothingPlaying)
@@ -108,27 +111,13 @@ async function runCommand(message: Message, channel: GuildTextBasedChannel, comm
   }
 
   if (command.type === 'queue') {
-    await channel.send({ embeds: [queueEmbed(queue, 1)], components: [queueRow(queue, 1)] })
+    const view = queueView(queue, 1)
+    await channel.send({ embeds: [view.embed], components: [view.row] })
 
     return
   }
 
-  switch (command.type) {
-    case 'skip':
-      await skipCurrent(queue)
-      break
-    case 'pause':
-    case 'resume':
-      await togglePause(queue)
-      break
-    case 'shuffle':
-      await queue.shuffle()
-      break
-    case 'clear':
-      await queue.stop()
-      break
-  }
-
+  await runMusicAction(queue, command.type)
   await message.react('✅')
 }
 
@@ -146,8 +135,10 @@ async function runRemoveCommand(message: Message, queue: Queue, index: number | 
   }
 
   if (index === 1)
-    await skipCurrent(queue)
+    await runMusicAction(queue, 'skip')
   else
+    // distube's Queue.remove() deletes the whole queue; there is no single-song
+    // removal API, so remove from the internal song list directly.
     queue.songs.splice(index - 1, 1)
 
   await message.react('✅')
