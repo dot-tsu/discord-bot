@@ -1,4 +1,4 @@
-import type { Message } from 'discord.js'
+import type { GuildTextBasedChannel, Message } from 'discord.js'
 import type { DisTubeError, Queue } from 'distube'
 import type { GuildSettingsStore } from '../guild-settings/store.ts'
 import type { Command } from './parse-command.ts'
@@ -22,7 +22,7 @@ export function setupMessageRouter(store: GuildSettingsStore) {
       if (!message.guildId)
         return
 
-      if (!message.channel.isTextBased())
+      if (message.channel.isDMBased() || !message.channel.isTextBased())
         return
 
       const command = parseCommand(
@@ -42,9 +42,9 @@ export function setupMessageRouter(store: GuildSettingsStore) {
         return
 
       if (command.type === 'query')
-        await playQuery(message, command.query)
+        await playQuery(message, message.channel, command.query)
       else
-        await runCommand(message, command)
+        await runCommand(message, message.channel, command)
     }
     catch (error) {
       console.error('[Discord] Message handling error:', error)
@@ -52,7 +52,7 @@ export function setupMessageRouter(store: GuildSettingsStore) {
   })
 }
 
-async function playQuery(message: Message, query: string) {
+async function playQuery(message: Message, channel: GuildTextBasedChannel, query: string) {
   const voiceChannel = message.member?.voice?.channel ?? null
 
   if (!voiceChannel) {
@@ -77,7 +77,7 @@ async function playQuery(message: Message, query: string) {
 
   try {
     await player.play(voiceChannel, query, {
-      textChannel: message.channel,
+      textChannel: channel,
       member: message.member ?? undefined,
     })
   }
@@ -92,7 +92,7 @@ async function playQuery(message: Message, query: string) {
   }
 }
 
-async function runCommand(message: Message, command: Exclude<Command, { type: 'configure' } | { type: 'query' }>) {
+async function runCommand(message: Message, channel: GuildTextBasedChannel, command: Exclude<Command, { type: 'configure' } | { type: 'query' }>) {
   const queue = player.getQueue(message.guildId ?? '')
 
   if (!queue) {
@@ -108,7 +108,7 @@ async function runCommand(message: Message, command: Exclude<Command, { type: 'c
   }
 
   if (command.type === 'queue') {
-    await message.channel.send({ embeds: [queueEmbed(queue, 1)], components: [queueRow(queue, 1)] })
+    await channel.send({ embeds: [queueEmbed(queue, 1)], components: [queueRow(queue, 1)] })
 
     return
   }
