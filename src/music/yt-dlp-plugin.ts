@@ -1,11 +1,19 @@
 import type { ResolveOptions } from 'distube'
 import { spawn } from 'node:child_process'
+import { mkdir, readdir, rm, stat } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { ExtractorPlugin, Playlist, Song } from 'distube'
 
+const AUDIO_DIR = join(tmpdir(), 'dj-audio')
+const FILE_MAX_AGE_MS = 86_400_000
+
 // yt-dlp resolves YouTube metadata and streams far more reliably than ytdl-core
-// (which fails to decipher current YouTube player JS). The official distube
-// wrapper merges stderr into its JSON parse, so any yt-dlp warning breaks it;
-// spawn it directly, reading stdout only and suppressing warnings.
+// (which fails to decipher current YouTube player JS). YouTube's googlevideo
+// audio URLs only answer closed-range requests, which ffmpeg cannot stream, so
+// the audio is downloaded to a local file and played from there. yt-dlp's own
+// wrapper merges stderr into its JSON parse, so spawn it directly, reading
+// stdout only and suppressing warnings.
 async function ytDlpJson(url: string, extraFlags: string[]) {
   const proc = spawn('yt-dlp', ['--no-warnings', '--no-call-home', '--dump-single-json', '--skip-download', ...extraFlags, url])
   let stdout = ''
@@ -18,6 +26,41 @@ async function ytDlpJson(url: string, extraFlags: string[]) {
     throw new Error(stderr.trim() || `yt-dlp exited with code ${code}`)
 
   return JSON.parse(stdout)
+}
+
+async function downloadAudio(url: string, id: string) {
+  await mkdir(AUDIO_DIR, { recursive: true })
+  await cleanOldFiles()
+
+  const existing = (await readdir(AUDIO_DIR)).find(file => file.startsWith(`${id}.`))
+
+  if (existing)
+    return existing
+
+  const proc = spawn('yt-dlp', ['--no-warnings', '--no-call-home', '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
+  const code = await new Promise<number>(resolve => proc.on('close', resolve))
+
+  if (code !== 0)
+    throw new Error(`yt-dlp failed to download audio (exit ${code})`)
+
+  const file = (await readdir(AUDIO_DIR)).find(name => name.startsWith(`${id}.`))
+
+  if (!file)
+    throw new Error('yt-dlp downloaded audio but no file was found')
+
+  return file
+}
+
+async function cleanOldFiles() {
+  const now = Date.now()
+
+  for (const file of await readdir(AUDIO_DIR)) {
+    const path = join(AUDIO_DIR, file)
+    const info = await stat(path).catch(() => null)
+
+    if (info && now - info.mtimeMs > FILE_MAX_AGE_MS)
+      await rm(path, { force: true })
+  }
 }
 
 interface YtDlpInfo {
@@ -79,9 +122,9 @@ export class YtDlpPlugin extends ExtractorPlugin {
   }
 
   async getStreamURL(song: Song): Promise<string> {
-    const info = (await ytDlpJson(song.url ?? '', ['-f', 'ba/ba*'])) as YtDlpInfo
+    const file = await downloadAudio(song.url ?? '', song.id)
 
-    return info.url ?? ''
+    return `file://${join(AUDIO_DIR, file)}`
   }
 
   private buildSong<T>(info: YtDlpInfo, options: ResolveOptions<T>): Song<T> {
