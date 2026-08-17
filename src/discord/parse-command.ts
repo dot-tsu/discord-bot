@@ -1,13 +1,12 @@
-export function isConfigurationCommand(content: string, botId: string, channelMentionIds: string[]): boolean {
-  if (channelMentionIds.length !== 1)
-    return false
+export function isConfigurationCommand(content: string, botId: string, botMentioned: boolean, channelMentionIds: string[]): boolean {
+  const [channelMentionId] = channelMentionIds
 
-  if (!content.includes(`<@${botId}>`) && !content.includes(`<@!${botId}>`))
+  if (!botMentioned || channelMentionIds.length !== 1 || channelMentionId === undefined)
     return false
 
   let rest = content
 
-  for (const mention of [`<@${botId}>`, `<@!${botId}>`, `<#${channelMentionIds[0]}>`])
+  for (const mention of [`<@${botId}>`, `<@!${botId}>`, `<#${channelMentionId}>`])
     rest = rest.replaceAll(mention, '')
 
   return rest.trim() === ''

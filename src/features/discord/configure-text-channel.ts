@@ -12,8 +12,11 @@ export async function configureTextChannel(message: Message, store: GuildSetting
 
   const channel = message.mentions.channels.first()
 
-  if (!channel || !channel.isTextBased() || !('guild' in channel))
+  if (!channel || !channel.isTextBased() || !('guild' in channel)) {
+    message.reply(MESSAGES.textChannelInvalid)
+
     return
+  }
 
   if (!message.guildId)
     return

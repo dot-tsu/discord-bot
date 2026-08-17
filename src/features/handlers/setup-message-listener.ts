@@ -14,8 +14,9 @@ export function setupMessageListener(store: GuildSettingsStore) {
       return
 
     const channelMentionIds = [...message.mentions.channels.keys()]
+    const botMentioned = message.mentions.members.has(message.client.user.id)
 
-    if (isConfigurationCommand(message.content, message.client.user.id, channelMentionIds)) {
+    if (isConfigurationCommand(message.content, message.client.user.id, botMentioned, channelMentionIds)) {
       configureTextChannel(message, store)
         .catch(error => console.error('[Config] Failed to configure channel:', error))
 

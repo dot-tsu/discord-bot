@@ -5,6 +5,7 @@ export const MESSAGES = {
   noResult: 'Sorry, I couldn\'t find any song matching your query.',
   playbackError: 'Sorry, I encountered an error while trying to play music.',
   channelConfigurePermission: 'You need the Manage Channels permission to set where I listen.',
+  textChannelInvalid: 'That channel can\'t be used for music. Mention a text channel instead.',
   textChannelConfigured: (channel: string) => `All set! I am now listening in ${channel}.`,
   nowPlaying: (song: string) => `Now playing: "${song}"`,
   songAdded: (song: string) => `Added "${song}" to the queue.`,
