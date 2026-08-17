@@ -1,13 +1,17 @@
 import { CONFIG } from '#features/config/app-config.js'
-import { getUserVoiceChannel } from '#features/discord/get-user-voice-channel.js'
 import { hasVoicePermissions } from '#features/discord/has-voice-permissions.js'
 import { playMusic } from '#features/handlers/play-music.js'
 import { skipSong } from '#features/music/skip-song.js'
-import { isSkipCommand } from '#features/skip/is-skip-command.js'
 import { ChannelType } from 'discord.js'
 
+function isSkipCommand(message) {
+  const mentionsBot = message.mentions.has(message.client.user)
+
+  return mentionsBot && message.content.toLowerCase().includes('skip')
+}
+
 export async function handleMessage(message) {
-  const voiceChannel = getUserVoiceChannel(message)
+  const voiceChannel = message.member?.voice?.channel ?? null
 
   if (!voiceChannel) {
     message.reply(CONFIG.MESSAGES.ERRORS.JOIN_VOICE_CHANNEL)

@@ -1,5 +1,11 @@
-import { INTENTS } from '#features/config/intents.js'
-import { Client, Events } from 'discord.js'
+import { Client, Events, GatewayIntentBits } from 'discord.js'
+
+const INTENTS = [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.MessageContent,
+  GatewayIntentBits.GuildVoiceStates,
+]
 
 export const client = new Client({ intents: INTENTS })
 

@@ -1,14 +1,16 @@
 import { client } from '#client'
 import { CONFIG } from '#features/config/app-config.js'
 import { configureTextChannel } from '#features/discord/configure-text-channel.js'
-import { isConfigurationCommand } from '#features/discord/is-configuration-command.js'
-import { shouldIgnoreMessage } from '#features/discord/should-ignore-message.js'
 import { handleMessage } from '#features/handlers/message-handler.js'
 import { Events } from 'discord.js'
 
+function isConfigurationCommand(message) {
+  return message.mentions.has(message.client.user) && message.mentions.channels.size > 0
+}
+
 export function setupMessageListener() {
   client.on(Events.MessageCreate, (message) => {
-    if (shouldIgnoreMessage(message))
+    if (message.author?.bot)
       return
 
     if (isConfigurationCommand(message))
