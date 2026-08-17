@@ -2,7 +2,7 @@ import type { DisTubePlugin } from 'distube'
 import { SpotifyPlugin } from '@distube/spotify'
 import { DisTube } from 'distube'
 import { client } from '../discord/client.ts'
-import { YtDlpSearchPlugin } from './yt-dlp-plugin.ts'
+import { YtDlpPlugin } from './yt-dlp-plugin.ts'
 
 // @distube/spotify's exports map routes every consumer to its CJS build, so its
 // typings clash with distube's ESM declarations (dual-package hazard) and TS
@@ -10,11 +10,8 @@ import { YtDlpSearchPlugin } from './yt-dlp-plugin.ts'
 // is only a declaration-level workaround.
 const spotifyPlugin = new SpotifyPlugin() as unknown as DisTubePlugin
 
-// @distube/yt-dlp has the same single-flavor typings issue as @distube/spotify.
-const ytDlpPlugin = new YtDlpSearchPlugin() as unknown as DisTubePlugin
-
 export const player = new DisTube(client, {
-  plugins: [spotifyPlugin, ytDlpPlugin],
+  plugins: [spotifyPlugin, new YtDlpPlugin()],
   emitAddListWhenCreatingQueue: true,
   emitAddSongWhenCreatingQueue: false,
   savePreviousSongs: false,
