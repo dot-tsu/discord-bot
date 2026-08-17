@@ -2,65 +2,78 @@
 
 # tsu-ld/dj
 
-Simple Discord bot that plays music in your voice channel.
-Just drop a song name or link in the assigned text channel and it'll start playing.
+A Discord bot that plays music in your voice channel. Drop a song name or a link in the assigned text channel and it starts playing. Controls live on the now-playing message as buttons, and the same commands work as plain text.
 
 ## Features
 
-- **Music Playback**: Plays YouTube links and search terms. Spotify links work too: the metadata comes from Spotify and the audio plays from YouTube.
-- **Skip**: Just type "skip" (while tagging the bot) to skip the current track.
-- **Auto Config**: The bot remembers which text channel to listen to.
-- **Welcome Audio**: Plays `assets/welcome.mp3` when first joining a guild's voice channel.
+- **Play anything**: YouTube links and search terms, and Spotify links (track, album, playlist, artist) — the track info comes from Spotify and the audio plays from YouTube.
+- **Full control surface**: pause, resume, skip, shuffle, clear, and a paginated queue view, all as buttons on the now-playing message or as `@DJ` text commands.
+- **Playlists**: paste a playlist link and it queues the whole thing.
+- **Leaves when done**: disconnects when the queue ends or the voice channel empties.
+- **Remembers its channel**: the listening channel is set per server and survives restarts.
+- **Welcome audio**: plays `assets/welcome.mp3` the first time it joins a voice channel each session (optional).
 
 ## Tech Stack
 
 - **[Node.js](https://nodejs.org/)**: 24
+- **[Bun](https://bun.sh/)**: installs, lints, and runs the test suite
 - **Discord**: [discord.js](https://discord.js.org/) + [distube](https://distube.js.org/)
-- **Plugins**: YouTube + Spotify
 - **Multimedia**: [ffmpeg](https://ffmpeg.org/)
 
 ## Requirements
 
-1. **FFmpeg**: Install [ffmpeg](https://ffmpeg.org/download.html) and make sure it's on your PATH.
-2. **Discord Bot**: Create a [Discord bot](https://discord.com/developers/applications) and get its token.
-
-## Usage
-
-1. **Configure Channel**: Mention the bot and a channel to set where it listens for music commands.
-   ```
-   @DJ #music-stuff
-   ```
-   The bot will remember this channel even after restarting.
-
-2. **Play Music**: Join a voice channel and send a link or search term in the configured text channel.
-   ```
-   never gonna give you up
-   ```
-
-3. **Skip**:
-   ```
-   @DJ skip
-   ```
+- **Node.js 24**
+- **FFmpeg**: install it and make sure it's on your PATH (distube streams audio through it)
+- **A Discord bot**: create one in the [Discord developer portal](https://discord.com/developers/applications) and invite it to your server with these intents: Send Messages, Embed Links, Attach Files, Read Message History, Connect, Speak, and the server members and voice states privileged intents.
 
 ## Setup
 
-1. **Install Dependencies**:
+1. **Install dependencies**:
+
    ```bash
    bun install
    ```
 
-2. **Configuration**:
-   Set the bot token in the `DISCORD_TOKEN` environment variable.
+2. **Set the bot token** in the `DISCORD_TOKEN` environment variable:
 
-3. **Welcome Audio** (Optional):
-   Place an MP3 file at `assets/welcome.mp3`. The bot will play this clip the first time it joins a voice channel in each session.
+   ```bash
+   export DISCORD_TOKEN=your_bot_token
+   ```
+
+3. **(Optional) welcome audio**: put an MP3 at `assets/welcome.mp3`.
 
 ## Run
 
 ```bash
 bun run start
-# or for development
+# or, while developing
 bun run dev
 ```
 
-I got tired of complicated music bots, so this one just... plays the damn song.
+## Using it
+
+1. **Point it at a channel** (the author needs the Manage Channels permission):
+
+   ```
+   @DJ #music
+   ```
+
+   The bot replies in that channel from then on and remembers it after restarting.
+
+2. **Play something**: join a voice channel and post a link or search term in the listening channel:
+
+   ```
+   never gonna give you up
+   ```
+
+3. **Control playback**: the buttons on the now-playing message cover everything. The same actions work as text if you prefer:
+
+   ```
+   @DJ skip
+   @DJ pause
+   @DJ resume
+   @DJ queue
+   @DJ shuffle
+   @DJ clear
+   @DJ remove 3
+   ```

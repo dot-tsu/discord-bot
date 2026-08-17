@@ -14,10 +14,11 @@ Probed on this machine, 2026-08-17. Reproducible; re-run before contradicting.
 
 - **Bun 1.3.14 cannot import `@distube/youtube`** (`this.compose is not a function`). Node 24.18 imports everything cleanly. Probe from the repo root: `bun -e "await import('@distube/youtube'); console.log('ok')"` (the `await` matters — a bare `import()` swallows the rejection). Therefore **Bun for install/lint/test, Node 24 for running**. If a future bump fixes the import, re-run the probe; when it passes, flipping the runtime scripts to Bun is pre-approved.
 - **ffmpeg is not installed on this machine.** Runtime prerequisite. distube 5 streams via ffmpeg; the requirement stays.
-- **distube 5 has no `leaveOnEmpty`/`leaveOnFinish`/`emptyCooldown` options** (distube 4 API, removed). Idle/empty disconnect is userland: listen to `Events.EMPTY` and `Events.FINISH`, call `voice.leave()`. Helper `isVoiceChannelEmpty` is exported.
+- **distube 5 has no `leaveOnEmpty`/`leaveOnFinish`/`emptyCooldown` options** (distube 4 API, removed). Idle/empty disconnect is userland. `Events.FINISH` is emitted when the queue drains naturally (NOT by `queue.stop()`), and distube does **not** emit `Events.EMPTY` at all — its `EMPTY` enum entry is dead code in this version. Empty-channel detection is a discord.js `VoiceStateUpdate` watcher using the exported `isVoiceChannelEmpty(voiceState)` helper (checks the bot's current voice channel for human members).
 - **distube 5 `Events`**: `error`, `addList`, `addSong`, `playSong`, `finishSong`, `empty`, `finish`, `initQueue`, `noRelated`, `disconnect`, `deleteQueue`, `ffmpegDebug`, `debug`.
 - **Queue methods available**: `pause`, `resume`, `shuffle`, `jump`, `seek`, `setRepeatMode`, `remove`, `toggleAutoplay`, `addToQueue`, `skip`, `stop`, `previous`. Feature work uses these; no reimplementation.
-- **`@distube/spotify` is not in the current manifest or node_modules.** The stale npm `package-lock.json` still lists it from npm-era history; that file gets deleted in phase 1. After adding the plugin in phase 6, verify its API from its own typings.
+- **`@distube/spotify@2.0.2` (latest) is added.** Its `exports` map is a bare CJS string (`"./dist/index.js"`), so TS routes every consumer to its CJS typings, which clash with distube's ESM declarations (dual-package hazard: `GuildMember._roles` declared twice). Assigning the plugin to the `plugins` array needs `as unknown as DisTubePlugin`; distube consumes plugins by duck typing (`p.init(this)`), so the cast is declaration-only. The plugin works with no credentials (scrapes a token; caps playlists at 100 tracks when scraping fails), so no env plumbing is wired.
+- **Bun cannot run the bot at all** beyond the import probe above; it must be `node src/index.ts` at runtime. A real end-to-end voice playback test under Bun was never possible on this machine (no ffmpeg, no token) — the user reported the original failure occurred when distube tried to play in a voice channel; verify with a live token before flipping runtimes.
 - **Node 24 strips TypeScript natively.** No build step. Erasable syntax only: no `enum`, no `namespace`, no constructor parameter properties, `import type` for type-only imports. `tsc --noEmit` is the type check; it must run in the lint script.
 - **Button interactions arrive via the `InteractionCreate` event on the existing `Guilds` intent.** There is no `interactionCreate` gateway intent. Do not add intents for buttons.
 
@@ -123,11 +124,11 @@ Gates are labeled **[agent]** (must pass locally before the phase is done) or **
 - Delete the `package.json` `imports` map: this phase removes the last `#features/*` files.
 - Verify **[agent]**: lint green. **[user]**: manual pass of every command and button; two guilds do not cross-contaminate; reconnect twice -> intro plays once.
 
-### Phase 6 — features [agent + user]
+### Phase 6 — features [agent + user] — DONE
 
-- Idle/empty disconnect: on `Events.EMPTY` and `Events.FINISH`, `voice.leave()`.
+- Idle/empty disconnect: on `Events.FINISH`, `voice.leave()` (implemented in `queue-events.ts`). Empty-channel detection: `leave-when-empty.ts`, a discord.js `VoiceStateUpdate` watcher using `isVoiceChannelEmpty` (distube 5 does not emit `Events.EMPTY`; see Verified facts).
 - Queue view: embed paginated past 10, via `queue` command and queue button.
-- Spotify: add `@distube/spotify`; check its typings for credential requirements before wiring. README states metadata-from-Spotify/audio-from-YouTube.
+- Spotify: `@distube/spotify` added, `new SpotifyPlugin()` registered with the dual-package-hazard cast (Verified facts). README states metadata-from-Spotify/audio-from-YouTube.
 - Verify **[agent]**: lint green. **[user]**: each feature exercised manually; no orphan voice connections after idle.
 
 ### Phase 7 — close out [agent + user]
