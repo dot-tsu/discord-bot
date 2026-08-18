@@ -1,10 +1,9 @@
-import type { ActionRowBuilder, ButtonBuilder, ButtonInteraction, EmbedBuilder } from 'discord.js'
 import { Events } from 'discord.js'
-import { MESSAGES } from '../messages/en.ts'
-import { queueView } from '../music/now-playing.ts'
-import { player } from '../music/player.ts'
-import { isMusicAction, runMusicAction } from '../music/queue-controls.ts'
-import { client } from './client.ts'
+import { MESSAGES } from '../messages/en.js'
+import { queueView } from '../music/now-playing.js'
+import { player } from '../music/player.js'
+import { isMusicAction, runMusicAction } from '../music/queue-controls.js'
+import { client } from './client.js'
 
 export function setupInteractionRouter() {
   client.on(Events.InteractionCreate, async (interaction) => {
@@ -27,7 +26,7 @@ export function setupInteractionRouter() {
   })
 }
 
-async function handleNowPlayingButton(interaction: ButtonInteraction) {
+async function handleNowPlayingButton(interaction) {
   const guildId = interaction.guildId
 
   if (!guildId)
@@ -55,14 +54,14 @@ async function handleNowPlayingButton(interaction: ButtonInteraction) {
   }
 }
 
-async function handleQueuePageButton(interaction: ButtonInteraction) {
+async function handleQueuePageButton(interaction) {
   const guildId = interaction.guildId
 
   if (!guildId)
     return
 
   const [direction, rawPage] = interaction.customId.slice('nq:'.length).split(':')
-  const page = Number.parseInt(rawPage ?? '1', 10)
+  const page = Number.parseInt(rawPage, 10)
   const queue = player.getQueue(guildId)
 
   if (!queue) {
@@ -84,10 +83,7 @@ async function handleQueuePageButton(interaction: ButtonInteraction) {
   })
 }
 
-async function updateQueueMessage(
-  interaction: ButtonInteraction,
-  payload: { content?: string, embeds: EmbedBuilder[], components: ActionRowBuilder<ButtonBuilder>[] },
-) {
+async function updateQueueMessage(interaction, payload) {
   if (interaction.message.interactionMetadata) {
     await interaction.update(payload)
 

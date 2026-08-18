@@ -1,15 +1,13 @@
-import type { Message } from 'discord.js'
-import type { Queue, Song } from 'distube'
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js'
 
 const QUEUE_PAGE_SIZE = 10
-const nowPlayingMessages = new Map<string, Message>()
+const nowPlayingMessages = new Map()
 
-export function songDisplayName(song: Song): string {
+export function songDisplayName(song) {
   return song.name ?? song.url ?? 'Unknown song'
 }
 
-export async function updateNowPlaying(queue: Queue, song: Song) {
+export async function updateNowPlaying(queue, song) {
   const channel = queue.textChannel
 
   if (!channel)
@@ -35,7 +33,7 @@ export async function updateNowPlaying(queue: Queue, song: Song) {
   nowPlayingMessages.set(queue.id, sent)
 }
 
-function nowPlayingEmbed(queue: Queue, song: Song) {
+function nowPlayingEmbed(queue, song) {
   return new EmbedBuilder()
     .setTitle(songDisplayName(song))
     .setURL(song.url ?? null)
@@ -46,7 +44,7 @@ function nowPlayingEmbed(queue: Queue, song: Song) {
 }
 
 function nowPlayingRow() {
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+  return new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('np:pause').setLabel('Pause / resume').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:shuffle').setLabel('Shuffle').setStyle(ButtonStyle.Secondary),
@@ -55,7 +53,7 @@ function nowPlayingRow() {
   )
 }
 
-export function queueView(queue: Queue, page: number) {
+export function queueView(queue, page) {
   const total = queue.songs.length
   const pageCount = Math.max(Math.ceil(total / QUEUE_PAGE_SIZE), 1)
   const start = (page - 1) * QUEUE_PAGE_SIZE
@@ -68,7 +66,7 @@ export function queueView(queue: Queue, page: number) {
     .setDescription(lines.join('\n') || 'Empty')
     .setFooter({ text: `Page ${page} of ${pageCount}` })
 
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+  const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`nq:prev:${page}`)
       .setLabel('Previous')

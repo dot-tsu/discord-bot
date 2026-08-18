@@ -1,36 +1,25 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
-export interface GuildSettings {
-  textChannelId: string | null
-}
+const DEFAULT_SETTINGS = { textChannelId: null }
 
-export interface GuildSettingsStore {
-  get: (guildId: string) => Readonly<GuildSettings>
-  setTextChannel: (guildId: string, channelId: string) => Promise<void>
-}
-
-type GuildSettingsMap = Record<string, GuildSettings>
-
-const DEFAULT_SETTINGS: GuildSettings = { textChannelId: null }
-
-async function readSettings(filePath: string): Promise<GuildSettingsMap> {
+async function readSettings(filePath) {
   try {
     return JSON.parse(await readFile(filePath, 'utf-8'))
   }
   catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT')
+    if (error.code === 'ENOENT')
       return {}
 
     throw error
   }
 }
 
-export async function loadSettingsStore(filePath: string): Promise<GuildSettingsStore> {
+export async function loadSettingsStore(filePath) {
   let settings = await readSettings(filePath)
-  let writeChain: Promise<void> = Promise.resolve()
+  let writeChain = Promise.resolve()
 
-  function writeSettings(): Promise<void> {
+  function writeSettings() {
     writeChain = writeChain.catch(() => {}).then(async () => {
       await mkdir(dirname(filePath), { recursive: true })
       const tempPath = `${filePath}.tmp`

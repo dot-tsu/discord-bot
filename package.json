@@ -7,9 +7,9 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "start": "node src/index.ts",
-    "dev": "node --watch src/index.ts",
-    "lint": "eslint . && tsc --noEmit"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@discordjs/opus": "npm:mediaplex@1.0.0",
@@ -21,9 +21,6 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
-    "@types/bun": "^1.3.14",
-    "@types/node": "^24",
-    "eslint": "^9.38.0",
-    "typescript": "~5.9.0"
+    "eslint": "^9.38.0"
   }
 }

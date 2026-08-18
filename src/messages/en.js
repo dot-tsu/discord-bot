@@ -6,10 +6,10 @@ export const MESSAGES = {
   playbackError: 'Sorry, I encountered an error while trying to play music.',
   channelConfigurePermission: 'You need the Manage Channels permission to set where I listen.',
   textChannelInvalid: 'That channel can\'t be used for music. Mention a text channel instead.',
-  textChannelConfigured: (channel: string) => `All set! I am now listening in ${channel}.`,
+  textChannelConfigured: channel => `All set! I am now listening in ${channel}.`,
   nothingPlaying: 'Nothing is playing right now.',
   removeUsage: 'Tell me which song to remove with a number, like: remove 2.',
   removeOutOfRange: 'There is no song at that position.',
-  songAdded: (song: string) => `Added "${song}" to the queue.`,
-  playlistAdded: (playlist: string, count: number) => `Added playlist "${playlist}" (${count} songs) to the queue.`,
+  songAdded: song => `Added "${song}" to the queue.`,
+  playlistAdded: (playlist, count) => `Added playlist "${playlist}" (${count} songs) to the queue.`,
 }

@@ -2,9 +2,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'bun:test'
-import { loadSettingsStore } from '../store.ts'
+import { loadSettingsStore } from '../store.js'
 
-async function withTempStore(run: (filePath: string) => Promise<void>) {
+async function withTempStore(run) {
   const dir = await mkdtemp(join(tmpdir(), 'settings-'))
   const filePath = join(dir, 'guilds.json')
 

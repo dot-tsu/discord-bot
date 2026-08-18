@@ -1,9 +1,7 @@
-import type { Message } from 'discord.js'
-import type { GuildSettingsStore } from '../guild-settings/store.ts'
 import { PermissionFlagsBits } from 'discord.js'
-import { MESSAGES } from '../messages/en.ts'
+import { MESSAGES } from '../messages/en.js'
 
-export async function configureTextChannel(message: Message, store: GuildSettingsStore) {
+export async function configureTextChannel(message, store) {
   if (!message.member?.permissions.has(PermissionFlagsBits.ManageChannels)) {
     await message.reply(MESSAGES.channelConfigurePermission)
 

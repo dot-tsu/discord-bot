@@ -1,10 +1,10 @@
 import { expect, test } from 'bun:test'
-import { parseCommand } from '../parse-command.ts'
+import { parseCommand } from '../parse-command.js'
 
 const BOT_ID = '123'
 const CHANNEL_ID = '456'
 
-function parse(content: string, channelIds: string[] = []) {
+function parse(content, channelIds = []) {
   const botMentioned = content.includes(`<@${BOT_ID}>`) || content.includes(`<@!${BOT_ID}>`)
 
   return parseCommand(content, BOT_ID, botMentioned, channelIds)

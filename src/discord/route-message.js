@@ -1,18 +1,14 @@
-import type { GuildTextBasedChannel, Message } from 'discord.js'
-import type { DisTubeError, Queue } from 'distube'
-import type { GuildSettingsStore } from '../guild-settings/store.ts'
-import type { Command } from './parse-command.ts'
 import { ChannelType, Events, PermissionFlagsBits } from 'discord.js'
-import { MESSAGES } from '../messages/en.ts'
-import { playIntroIfFirstJoin } from '../music/intro.ts'
-import { queueView } from '../music/now-playing.ts'
-import { player } from '../music/player.ts'
-import { runMusicAction } from '../music/queue-controls.ts'
-import { client } from './client.ts'
-import { configureTextChannel } from './configure-text-channel.ts'
-import { parseCommand } from './parse-command.ts'
+import { MESSAGES } from '../messages/en.js'
+import { playIntroIfFirstJoin } from '../music/intro.js'
+import { queueView } from '../music/now-playing.js'
+import { player } from '../music/player.js'
+import { runMusicAction } from '../music/queue-controls.js'
+import { client } from './client.js'
+import { configureTextChannel } from './configure-text-channel.js'
+import { parseCommand } from './parse-command.js'
 
-export function setupMessageRouter(store: GuildSettingsStore) {
+export function setupMessageRouter(store) {
   client.on(Events.MessageCreate, async (message) => {
     try {
       if (message.author.bot)
@@ -21,7 +17,7 @@ export function setupMessageRouter(store: GuildSettingsStore) {
       if (!message.guildId)
         return
 
-      if (message.channel.isDMBased() || !message.channel.isTextBased())
+      if (!message.channel.isTextBased())
         return
 
       const command = parseCommand(
@@ -51,7 +47,7 @@ export function setupMessageRouter(store: GuildSettingsStore) {
   })
 }
 
-async function playQuery(message: Message, channel: GuildTextBasedChannel, query: string) {
+async function playQuery(message, channel, query) {
   const voiceChannel = message.member?.voice?.channel ?? null
 
   if (!voiceChannel) {
@@ -80,14 +76,14 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
   try {
     await player.play(voiceChannel, query, {
       textChannel: channel,
-      member: message.member ?? undefined,
+      member: message.member,
     })
   }
   catch (error) {
     if (!player.getQueue(voiceChannel.guild.id))
       await voiceChannel.guild.members.me?.voice.disconnect()
 
-    if ((error as DisTubeError).errorCode === 'NO_RESULT') {
+    if (error.errorCode === 'NO_RESULT') {
       await message.reply(MESSAGES.noResult)
 
       return
@@ -97,7 +93,7 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
   }
 }
 
-async function runCommand(message: Message, guildId: string, channel: GuildTextBasedChannel, command: Exclude<Command, { type: 'configure' } | { type: 'query' }>) {
+async function runCommand(message, guildId, channel, command) {
   const queue = player.getQueue(guildId)
 
   if (!queue) {
@@ -123,7 +119,7 @@ async function runCommand(message: Message, guildId: string, channel: GuildTextB
   await message.react('✅')
 }
 
-async function runRemoveCommand(message: Message, queue: Queue, index: number | null) {
+async function runRemoveCommand(message, queue, index) {
   if (index === null) {
     await message.reply(MESSAGES.removeUsage)
 

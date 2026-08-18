@@ -1,23 +1,10 @@
-export type Command
-  = | { type: 'configure' }
-    | { type: 'skip' }
-    | { type: 'pause' }
-    | { type: 'resume' }
-    | { type: 'queue' }
-    | { type: 'shuffle' }
-    | { type: 'clear' }
-    | { type: 'remove', index: number | null }
-    | { type: 'query', query: string }
+const COMMAND_NAMES = ['skip', 'pause', 'resume', 'queue', 'shuffle', 'clear', 'remove']
 
-const COMMAND_NAMES = ['skip', 'pause', 'resume', 'queue', 'shuffle', 'clear', 'remove'] as const
-
-type CommandName = typeof COMMAND_NAMES[number]
-
-function isCommandName(word: string): word is CommandName {
-  return (COMMAND_NAMES as readonly string[]).includes(word)
+function isCommandName(word) {
+  return COMMAND_NAMES.includes(word)
 }
 
-function isConfigurationCommand(content: string, botId: string, botMentioned: boolean, channelMentionIds: string[]): boolean {
+function isConfigurationCommand(content, botId, botMentioned, channelMentionIds) {
   const [channelMentionId] = channelMentionIds
 
   if (!botMentioned || channelMentionIds.length !== 1 || channelMentionId === undefined)
@@ -31,11 +18,11 @@ function isConfigurationCommand(content: string, botId: string, botMentioned: bo
   return rest.trim() === ''
 }
 
-function stripMention(content: string, botId: string): string {
+function stripMention(content, botId) {
   return content.replaceAll(`<@${botId}>`, '').replaceAll(`<@!${botId}>`, '')
 }
 
-export function parseCommand(content: string, botId: string, botMentioned: boolean, channelMentionIds: string[]): Command {
+export function parseCommand(content, botId, botMentioned, channelMentionIds) {
   if (isConfigurationCommand(content, botId, botMentioned, channelMentionIds))
     return { type: 'configure' }
 

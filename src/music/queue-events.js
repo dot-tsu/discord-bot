@@ -1,12 +1,11 @@
-import type { GuildTextBasedChannel } from 'discord.js'
 import { Events } from 'distube'
-import { MESSAGES } from '../messages/en.ts'
-import { songDisplayName, updateNowPlaying } from './now-playing.ts'
-import { player } from './player.ts'
+import { MESSAGES } from '../messages/en.js'
+import { songDisplayName, updateNowPlaying } from './now-playing.js'
+import { player } from './player.js'
 
-function notify(textChannel: GuildTextBasedChannel | undefined, content: string) {
+function notify(textChannel, content) {
   if (textChannel)
-    textChannel.send(content).catch((error: unknown) => console.error('[Music] Failed to send message:', error))
+    textChannel.send(content).catch(error => console.error('[Music] Failed to send message:', error))
 }
 
 export function setupMusicEvents() {

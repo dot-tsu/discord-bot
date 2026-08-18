@@ -1,4 +1,3 @@
-import type { ResolveOptions } from 'distube'
 import { spawn } from 'node:child_process'
 import { mkdir, readdir, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -19,18 +18,18 @@ const YT_CLIENT_ARGS = ['--extractor-args', 'youtube:player_client=android']
 // the audio is downloaded to a local file and played from there. yt-dlp's own
 // wrapper merges stderr into its JSON parse, so spawn it directly, reading
 // stdout only and suppressing warnings.
-async function runYtDlp(args: string[]): Promise<{ code: number, stdout: string, stderr: string }> {
+async function runYtDlp(args) {
   const proc = spawn('yt-dlp', args)
   let stdout = ''
   let stderr = ''
   proc.stdout.on('data', chunk => (stdout += chunk))
   proc.stderr.on('data', chunk => (stderr += chunk))
-  const code = await new Promise<number>(resolve => proc.on('close', resolve))
+  const code = await new Promise(resolve => proc.on('close', resolve))
 
   return { code, stdout, stderr }
 }
 
-async function ytDlpJson(url: string, extraFlags: string[]) {
+async function ytDlpJson(url, extraFlags) {
   const { code, stdout, stderr } = await runYtDlp(['--no-warnings', ...YT_CLIENT_ARGS, '--dump-single-json', '--skip-download', ...extraFlags, url])
 
   if (code !== 0)
@@ -39,7 +38,7 @@ async function ytDlpJson(url: string, extraFlags: string[]) {
   return JSON.parse(stdout)
 }
 
-async function downloadAudio(url: string, id: string) {
+async function downloadAudio(url, id) {
   await mkdir(AUDIO_DIR, { recursive: true })
   await cleanOldFiles()
 
@@ -73,25 +72,6 @@ async function cleanOldFiles() {
   }
 }
 
-interface YtDlpInfo {
-  id: string
-  title: string
-  fulltitle?: string
-  webpage_url?: string
-  original_url?: string
-  is_live?: boolean
-  thumbnail?: string
-  thumbnails?: { url: string }[]
-  duration?: number
-  uploader?: string
-  uploader_url?: string
-  view_count?: number
-  like_count?: number
-  age_limit?: number
-  extractor?: string
-  url?: string
-}
-
 export class YtDlpPlugin extends ExtractorPlugin {
   validate() {
     return true
@@ -101,15 +81,15 @@ export class YtDlpPlugin extends ExtractorPlugin {
     return []
   }
 
-  async searchSong<T>(query: string, options: ResolveOptions<T>): Promise<Song<T> | null> {
-    const info = (await ytDlpJson(`ytsearch1:${query}`, ['--no-playlist'])) as YtDlpInfo & { entries?: YtDlpInfo[] }
+  async searchSong(query, options) {
+    const info = await ytDlpJson(`ytsearch1:${query}`, ['--no-playlist'])
     const first = info.entries?.[0]
 
     return first ? this.buildSong(first, options) : null
   }
 
-  async resolve<T>(url: string, options: ResolveOptions<T>): Promise<Song<T> | Playlist<T>> {
-    const info = (await ytDlpJson(url, [])) as YtDlpInfo & { _type?: string, entries?: YtDlpInfo[] }
+  async resolve(url, options) {
+    const info = await ytDlpJson(url, [])
 
     if (info._type === 'playlist') {
       if (!info.entries || info.entries.length === 0)
@@ -131,13 +111,13 @@ export class YtDlpPlugin extends ExtractorPlugin {
     return this.buildSong(info, options)
   }
 
-  async getStreamURL(song: Song): Promise<string> {
+  async getStreamURL(song) {
     const file = await downloadAudio(song.url ?? '', song.id)
 
     return `file://${join(AUDIO_DIR, file)}`
   }
 
-  private buildSong<T>(info: YtDlpInfo, options: ResolveOptions<T>): Song<T> {
+  buildSong(info, options) {
     return new Song(
       {
         plugin: this,
@@ -155,7 +135,7 @@ export class YtDlpPlugin extends ExtractorPlugin {
         },
         views: info.view_count,
         likes: info.like_count,
-        ageRestricted: Boolean(info.age_limit) && (info.age_limit ?? 0) >= 18,
+        ageRestricted: (info.age_limit ?? 0) >= 18,
       },
       options,
     )

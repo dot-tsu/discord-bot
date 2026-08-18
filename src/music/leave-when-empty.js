@@ -1,7 +1,7 @@
 import { Events } from 'discord.js'
 import { isVoiceChannelEmpty } from 'distube'
-import { client } from '../discord/client.ts'
-import { player } from './player.ts'
+import { client } from '../discord/client.js'
+import { player } from './player.js'
 
 export function setupLeaveWhenEmpty() {
   client.on(Events.VoiceStateUpdate, (oldState) => {
