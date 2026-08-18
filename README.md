@@ -53,7 +53,7 @@ A Discord bot that plays music in your voice channel. Drop a song name or a link
    export OPENAI_MODEL=your_model  # optional, defaults to deepseek-v4-flash
    ```
 
-   Without these, the bot still plays music but answers with plain messages and only follows the text commands.
+   Without these, the bot still plays music, but tagged requests and announcements stay silent (refusals get a ❌ reaction) and only the text commands keep working.
 
 4. **(Optional) welcome audio**: put an MP3 at `assets/welcome.mp3`.
 
