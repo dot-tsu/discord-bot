@@ -15,7 +15,7 @@ const FILE_MAX_AGE_MS = 86_400_000
 // wrapper merges stderr into its JSON parse, so spawn it directly, reading
 // stdout only and suppressing warnings.
 async function ytDlpJson(url: string, extraFlags: string[]) {
-  const proc = spawn('yt-dlp', ['--no-warnings', '--no-call-home', '--dump-single-json', '--skip-download', ...extraFlags, url])
+  const proc = spawn('yt-dlp', ['--no-warnings', '--dump-single-json', '--skip-download', ...extraFlags, url])
   let stdout = ''
   let stderr = ''
   proc.stdout.on('data', chunk => (stdout += chunk))
@@ -37,7 +37,7 @@ async function downloadAudio(url: string, id: string) {
   if (existing)
     return existing
 
-  const proc = spawn('yt-dlp', ['--no-warnings', '--no-call-home', '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
+  const proc = spawn('yt-dlp', ['--no-warnings', '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
   let stderr = ''
   proc.stderr.on('data', chunk => (stderr += chunk))
   const code = await new Promise<number>(resolve => proc.on('close', resolve))
