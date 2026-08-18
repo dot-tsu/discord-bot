@@ -15,8 +15,6 @@
     "@discordjs/opus": "npm:mediaplex@1.0.0",
     "@discordjs/voice": "^0.19.0",
     "@distube/spotify": "^2.0.2",
-    "@distube/youtube": "^1.0.4",
-    "@distube/ytdl-core": "git+https://github.com/ToddyTheNoobDud/ytdl-core-stuff.git#5c779c07ba6a0636bcc894c0ba1d09ceec7028bb",
     "@snazzah/davey": "0.1.6",
     "discord.js": "^14.24.2",
     "distube": "^5.0.7"
