@@ -8,6 +8,11 @@ import { ExtractorPlugin, Playlist, Song } from 'distube'
 const AUDIO_DIR = join(tmpdir(), 'dj-audio')
 const FILE_MAX_AGE_MS = 86_400_000
 
+// YouTube throttles the default android_vr client's media URLs (403) after a
+// burst of requests; the plain android client is unaffected and yields a
+// progressive mp4 that ffmpeg can read directly.
+const YT_CLIENT_ARGS = ['--extractor-args', 'youtube:player_client=android']
+
 // yt-dlp resolves YouTube metadata and streams far more reliably than ytdl-core
 // (which fails to decipher current YouTube player JS). YouTube's googlevideo
 // audio URLs only answer closed-range requests, which ffmpeg cannot stream, so
@@ -15,7 +20,7 @@ const FILE_MAX_AGE_MS = 86_400_000
 // wrapper merges stderr into its JSON parse, so spawn it directly, reading
 // stdout only and suppressing warnings.
 async function ytDlpJson(url: string, extraFlags: string[]) {
-  const proc = spawn('yt-dlp', ['--no-warnings', '--dump-single-json', '--skip-download', ...extraFlags, url])
+  const proc = spawn('yt-dlp', ['--no-warnings', ...YT_CLIENT_ARGS, '--dump-single-json', '--skip-download', ...extraFlags, url])
   let stdout = ''
   let stderr = ''
   proc.stdout.on('data', chunk => (stdout += chunk))
@@ -37,7 +42,7 @@ async function downloadAudio(url: string, id: string) {
   if (existing)
     return existing
 
-  const proc = spawn('yt-dlp', ['--no-warnings', '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
+  const proc = spawn('yt-dlp', ['--no-warnings', ...YT_CLIENT_ARGS, '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
   let stderr = ''
   proc.stderr.on('data', chunk => (stderr += chunk))
   const code = await new Promise<number>(resolve => proc.on('close', resolve))
