@@ -19,11 +19,13 @@ A Discord bot that plays music in your voice channel. Drop a song name or a link
 - **[Bun](https://bun.sh/)**: installs, lints, and runs the test suite
 - **Discord**: [discord.js](https://discord.js.org/) + [distube](https://distube.js.org/)
 - **Multimedia**: [ffmpeg](https://ffmpeg.org/)
+- **Downloader**: [yt-dlp](https://github.com/yt-dlp/yt-dlp) (resolves and downloads YouTube audio)
 
 ## Requirements
 
 - **Node.js 24**
 - **FFmpeg**: install it and make sure it's on your PATH (distube streams audio through it)
+- **yt-dlp**: install it and make sure it's on your PATH (the bot downloads YouTube audio through it)
 - **A Discord bot**: create one in the [Discord developer portal](https://discord.com/developers/applications) and invite it to your server with these intents: Send Messages, Embed Links, Attach Files, Read Message History, Connect, Speak, and the server members and voice states privileged intents.
 
 ## Setup
