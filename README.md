@@ -2,10 +2,12 @@
 
 # tsu-ld/dj
 
-A Discord bot that plays music in your voice channel. Drop a song name or a link in the assigned text channel and it starts playing. Controls live on the now-playing message as buttons, and the same commands work as plain text.
+A Discord bot that plays music in your voice channel. Drop a song name or a link in the assigned text channel and it starts playing, or tag it and talk to it like a DJ: it picks the music and answers in its own voice. Controls live on the now-playing message as buttons, and the same commands work as plain text.
 
 ## Features
 
+- **Talk to it like a DJ**: tag the bot with a plain request ("poneme algo tranqui de rock nacional") and it chooses the songs, queues them, and answers in character.
+- **Personality per server**: its voice is set with `@DJ persona ...` and lives with the server settings.
 - **Play anything**: YouTube links and search terms, and Spotify links (track, album, playlist, artist) — the track info comes from Spotify and the audio plays from YouTube.
 - **Full control surface**: pause, resume, skip, shuffle, clear, and a paginated queue view, all as buttons on the now-playing message or as `@DJ` text commands.
 - **Playlists**: paste a playlist link and it queues the whole thing.
@@ -20,6 +22,7 @@ A Discord bot that plays music in your voice channel. Drop a song name or a link
 - **Discord**: [discord.js](https://discord.js.org/) + [distube](https://distube.js.org/)
 - **Multimedia**: [ffmpeg](https://ffmpeg.org/)
 - **Downloader**: [yt-dlp](https://github.com/yt-dlp/yt-dlp) (resolves and downloads YouTube audio)
+- **LLM**: any OpenAI-compatible `/chat/completions` endpoint (the DJ's voice and song picks)
 
 ## Requirements
 
@@ -42,7 +45,17 @@ A Discord bot that plays music in your voice channel. Drop a song name or a link
    export DISCORD_TOKEN=your_bot_token
    ```
 
-3. **(Optional) welcome audio**: put an MP3 at `assets/welcome.mp3`.
+3. **(Optional) give it a voice**: point the bot at any OpenAI-compatible `/chat/completions` endpoint so it can talk and pick songs:
+
+   ```bash
+   export OPENAI_BASE_URL=https://your-endpoint/v1/chat/completions
+   export OPENAI_API_KEY=your_api_key
+   export OPENAI_MODEL=your_model  # optional, defaults to deepseek-v4-flash
+   ```
+
+   Without these, the bot still plays music but answers with plain messages and only follows the text commands.
+
+4. **(Optional) welcome audio**: put an MP3 at `assets/welcome.mp3`.
 
 ## Run
 
@@ -79,3 +92,22 @@ bun run dev
    @DJ clear
    @DJ remove 3
    ```
+
+4. **Talk to the DJ**: tag it with anything that is not one of the commands above:
+
+   ```
+   @DJ poneme algo tranqui para el asado
+   ```
+
+   It picks the songs to match the request, queues them, and answers in its own voice. Without the LLM configured, tagged messages fall back to searching the text on YouTube.
+
+5. **Set its personality** (the author needs the Manage Server permission):
+
+   ```
+   @DJ persona you are a cumbiero dj who never stops joking
+   ```
+
+## Testing
+
+- `bun test` runs the unit tests.
+- `bun run test:e2e` runs the live end-to-end suite against a real Discord guild. It reads the token and LLM vars from `~/.config/dj/discord.env` (override the path with `E2E_ENV_FILE`) and needs `E2E_GUILD`, `E2E_VOICE` and `E2E_TEXT` set. Stop the bot service first: one Discord session per token.
