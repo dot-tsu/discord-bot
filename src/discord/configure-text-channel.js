@@ -19,7 +19,7 @@ export async function configureTextChannel(message, store) {
   if (!message.guildId)
     return
 
-  await store.setTextChannel(message.guildId, channel.id)
+  await store.updateGuild(message.guildId, { textChannelId: channel.id })
   console.info(`[Config] Text channel set to: ${channel.name} (${channel.id})`)
   await message.reply(MESSAGES.textChannelConfigured(channel.toString()))
 }

@@ -1,5 +1,21 @@
 export const MUSIC_ACTIONS = ['pause', 'resume', 'skip', 'shuffle', 'clear']
 
+export function isPositionInQueue(queue, position) {
+  return position > 0 && position <= queue.songs.length
+}
+
+export async function removeSongAt(queue, position) {
+  if (position === 1) {
+    await runMusicAction(queue, 'skip')
+
+    return
+  }
+
+  // distube's Queue.remove() deletes the whole queue; there is no single-song
+  // removal API, so remove from the internal song list directly.
+  queue.songs.splice(position - 1, 1)
+}
+
 export async function runMusicAction(queue, action) {
   switch (action) {
     case 'pause':

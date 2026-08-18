@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
-const DEFAULT_SETTINGS = { textChannelId: null }
+const DEFAULT_SETTINGS = { textChannelId: null, persona: null }
 
 async function readSettings(filePath) {
   try {
@@ -34,10 +34,10 @@ export async function loadSettingsStore(filePath) {
     get(guildId) {
       return settings[guildId] ? { ...settings[guildId] } : { ...DEFAULT_SETTINGS }
     },
-    async setTextChannel(guildId, channelId) {
+    async updateGuild(guildId, changes) {
       settings = {
         ...settings,
-        [guildId]: { ...settings[guildId], textChannelId: channelId },
+        [guildId]: { ...settings[guildId], ...changes },
       }
       await writeSettings()
     },

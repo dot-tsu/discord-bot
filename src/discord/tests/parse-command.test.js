@@ -15,12 +15,23 @@ test('bot mention plus one channel mention configures', () => {
   expect(parse(`<@!${BOT_ID}> <#${CHANNEL_ID}>`, [CHANNEL_ID])).toEqual({ type: 'configure' })
 })
 
-test('extra words make it a command or query, not a config', () => {
+test('extra words make it a command or a dj request, not a config', () => {
   expect(parse(`<@${BOT_ID}> skip <#${CHANNEL_ID}>`, [CHANNEL_ID])).toEqual({ type: 'skip' })
   expect(parse(`<@${BOT_ID}> play that song from <#${CHANNEL_ID}>`, [CHANNEL_ID]))
-    .toEqual({ type: 'query', query: 'play that song from <#456>' })
+    .toEqual({ type: 'dj', request: 'play that song from <#456>' })
   expect(parse(`<@${BOT_ID}> <#${CHANNEL_ID}> please`, [CHANNEL_ID]))
-    .toEqual({ type: 'query', query: '<#456> please' })
+    .toEqual({ type: 'dj', request: '<#456> please' })
+})
+
+test('mentioning the bot with anything but a command asks the dj', () => {
+  expect(parse(`<@${BOT_ID}> poneme algo tranqui de rock nacional`))
+    .toEqual({ type: 'dj', request: 'poneme algo tranqui de rock nacional' })
+  expect(parse(`<@!${BOT_ID}> sacá esta y poné otra`))
+    .toEqual({ type: 'dj', request: 'sacá esta y poné otra' })
+})
+
+test('without a mention the text is played as written, never sent to the dj', () => {
+  expect(parse('Los Redondos - Jijiji')).toEqual({ type: 'query', query: 'Los Redondos - Jijiji' })
 })
 
 test('each command word maps to its command', () => {
@@ -42,7 +53,7 @@ test('remove takes a number, or is null when missing or invalid', () => {
 
 test('more than one channel mention is not a config', () => {
   expect(parse(`<@${BOT_ID}> <#${CHANNEL_ID}> <#789>`, [CHANNEL_ID, '789']))
-    .toEqual({ type: 'query', query: '<#456> <#789>' })
+    .toEqual({ type: 'dj', request: '<#456> <#789>' })
 })
 
 test('mentioning the same channel twice still configures that channel', () => {
@@ -51,7 +62,7 @@ test('mentioning the same channel twice still configures that channel', () => {
 
 test('no bot mention or no channel mention is not a config', () => {
   expect(parse(`<#${CHANNEL_ID}>`, [CHANNEL_ID])).toEqual({ type: 'query', query: '<#456>' })
-  expect(parse(`<@${BOT_ID}>`)).toEqual({ type: 'query', query: '' })
+  expect(parse(`<@${BOT_ID}>`)).toEqual({ type: 'dj', request: '' })
   expect(parse('never gonna give you up')).toEqual({ type: 'query', query: 'never gonna give you up' })
 })
 
@@ -61,7 +72,7 @@ test('mentions inside a code block are not real mentions', () => {
   expect(parseCommand(content, BOT_ID, false, [])).toEqual({ type: 'query', query: content })
 })
 
-test('bot mention is stripped from the query', () => {
-  expect(parse(`<@${BOT_ID}> never gonna give you up`)).toEqual({ type: 'query', query: 'never gonna give you up' })
-  expect(parse(`<@!${BOT_ID}> never gonna give you up`)).toEqual({ type: 'query', query: 'never gonna give you up' })
+test('bot mention is stripped from the request', () => {
+  expect(parse(`<@${BOT_ID}> never gonna give you up`)).toEqual({ type: 'dj', request: 'never gonna give you up' })
+  expect(parse(`<@!${BOT_ID}> never gonna give you up`)).toEqual({ type: 'dj', request: 'never gonna give you up' })
 })

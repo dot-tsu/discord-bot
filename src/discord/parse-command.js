@@ -1,4 +1,4 @@
-const COMMAND_NAMES = ['skip', 'pause', 'resume', 'queue', 'shuffle', 'clear', 'remove']
+const COMMAND_NAMES = ['skip', 'pause', 'resume', 'queue', 'shuffle', 'clear', 'remove', 'persona']
 
 function isConfigurationCommand(content, botId, botMentioned, channelMentionIds) {
   const [channelMentionId] = channelMentionIds
@@ -34,8 +34,13 @@ export function parseCommand(content, botId, botMentioned, channelMentionIds) {
         return { type: 'remove', index }
       }
 
+      if (word === 'persona')
+        return { type: 'persona', text: rest.join(' ') }
+
       return { type: word }
     }
+
+    return { type: 'dj', request: text }
   }
 
   return { type: 'query', query: text }

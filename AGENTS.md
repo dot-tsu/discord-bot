@@ -17,8 +17,10 @@
 ## Configuration
 
 - Bot token goes in the `DISCORD_TOKEN` environment variable
+- The DJ's LLM key goes in the `OPENCODE_GO_KEY` environment variable (OpenCode Go subscription). Without it, the bot falls back to the plain `src/messages/en.js` texts (no DJ voice)
 - Per-guild settings are auto-persisted to `data/guilds.json` (gitignored)
 - Configure the listening channel by mentioning the bot and a channel: `@DJ #music`
+- Configure the DJ's personality (Manage Server permission needed): `@DJ persona you are a cumbiero dj`
 - `assets/welcome.mp3` (optional) - Played when bot first joins a voice channel per guild
 
 ## Runtime notes
@@ -32,3 +34,4 @@
 - Uses discord.js 14 + distube 5 for music playback
 - Plain JavaScript: relative imports carry the real on-disk `.js` extension (Node 24 ESM)
 - Tests run with `bun test`
+- The DJ layer lives in `src/dj/`: messages mentioning the bot are handled by the LLM through OpenCode Go's `/chat/completions` endpoint, with tools to control the queue. Plain messages in the configured channel still search YouTube directly

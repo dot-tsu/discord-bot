@@ -1,12 +1,19 @@
 import { ChannelType, Events, PermissionFlagsBits } from 'discord.js'
+import { askDj } from '../dj/ask.js'
+import { refuse, say } from '../dj/speak.js'
 import { MESSAGES } from '../messages/en.js'
 import { playIntroIfFirstJoin } from '../music/intro.js'
 import { queueView } from '../music/now-playing.js'
 import { player } from '../music/player.js'
-import { runMusicAction } from '../music/queue-controls.js'
+import { isPositionInQueue, removeSongAt, runMusicAction } from '../music/queue-controls.js'
 import { client } from './client.js'
 import { configureTextChannel } from './configure-text-channel.js'
 import { parseCommand } from './parse-command.js'
+
+const MAX_PERSONA_LENGTH = 500
+const DJ_REQUEST_COOLDOWN_MS = 15_000
+
+const lastDjRequestAt = new Map()
 
 export function setupMessageRouter(store) {
   client.on(Events.MessageCreate, async (message) => {
@@ -33,13 +40,21 @@ export function setupMessageRouter(store) {
         return
       }
 
+      if (command.type === 'persona') {
+        await configurePersona(message, store, command.text)
+
+        return
+      }
+
       if (message.channelId !== store.get(message.guildId).textChannelId)
         return
 
       if (command.type === 'query')
-        await playQuery(message, message.channel, command.query)
+        await playQuery(store, message, command.query)
+      else if (command.type === 'dj')
+        await askDjInChannel(store, message, command.request)
       else
-        await runCommand(message, message.guildId, message.channel, command)
+        await runCommand(store, message, command)
     }
     catch (error) {
       console.error('[Discord] Message handling error:', error)
@@ -47,25 +62,55 @@ export function setupMessageRouter(store) {
   })
 }
 
-async function playQuery(message, channel, query) {
+async function configurePersona(message, store, text) {
+  if (!message.member?.permissions.has(PermissionFlagsBits.ManageGuild)) {
+    await refuse(message, store.get(message.guildId), MESSAGES.personaPermission)
+
+    return
+  }
+
+  const persona = text.trim()
+
+  if (!persona) {
+    await refuse(message, store.get(message.guildId), MESSAGES.personaUsage)
+
+    return
+  }
+
+  if (persona.length > MAX_PERSONA_LENGTH) {
+    await refuse(message, store.get(message.guildId), MESSAGES.personaTooLong(MAX_PERSONA_LENGTH))
+
+    return
+  }
+
+  await store.updateGuild(message.guildId, { persona })
+  await say(message, store.get(message.guildId), MESSAGES.personaConfigured)
+}
+
+// The same checks gate every path into the voice channel: a direct query or
+// the dj's own tool calls must not join where the bot cannot speak.
+function voiceChannelProblem(voiceChannel, guild) {
+  if (!voiceChannel)
+    return MESSAGES.joinVoiceChannel
+
+  if (voiceChannel.type === ChannelType.GuildStageVoice)
+    return MESSAGES.stageChannelPermissions
+
+  const permissions = voiceChannel.permissionsFor(guild.members.me)
+
+  if (!permissions?.has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak]))
+    return MESSAGES.botPermissions
+
+  return null
+}
+
+async function playQuery(store, message, query) {
   const voiceChannel = message.member?.voice?.channel ?? null
+  const settings = store.get(message.guildId)
+  const problem = voiceChannelProblem(voiceChannel, message.guild)
 
-  if (!voiceChannel) {
-    await message.reply(MESSAGES.joinVoiceChannel)
-
-    return
-  }
-
-  if (voiceChannel.type === ChannelType.GuildStageVoice) {
-    await message.reply(MESSAGES.stageChannelPermissions)
-
-    return
-  }
-
-  const permissions = voiceChannel.permissionsFor(message.guild.members.me)
-
-  if (!permissions?.has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
-    await message.reply(MESSAGES.botPermissions)
+  if (problem) {
+    await refuse(message, settings, problem)
 
     return
   }
@@ -74,7 +119,7 @@ async function playQuery(message, channel, query) {
 
   try {
     await player.play(voiceChannel, query, {
-      textChannel: channel,
+      textChannel: message.channel,
       member: message.member,
     })
   }
@@ -83,33 +128,67 @@ async function playQuery(message, channel, query) {
       await voiceChannel.guild.members.me?.voice.disconnect()
 
     if (error.errorCode === 'NO_RESULT') {
-      await message.reply(MESSAGES.noResult)
+      await refuse(message, settings, MESSAGES.noResult)
 
       return
     }
     console.error('[Music] Play error:', error)
-    await message.reply(MESSAGES.playbackError)
+    await say(message, settings, MESSAGES.playbackError)
   }
 }
 
-async function runCommand(message, guildId, channel, command) {
-  const queue = player.getQueue(guildId)
+async function askDjInChannel(store, message, request) {
+  const lastRequest = lastDjRequestAt.get(message.author.id) ?? 0
+
+  if (Date.now() - lastRequest < DJ_REQUEST_COOLDOWN_MS) {
+    await message.reply(MESSAGES.djBusy)
+
+    return
+  }
+
+  lastDjRequestAt.set(message.author.id, Date.now())
+
+  const voiceChannel = message.member?.voice?.channel ?? null
+  const settings = store.get(message.guildId)
+  const problem = voiceChannelProblem(voiceChannel, message.guild)
+
+  if (problem) {
+    await refuse(message, settings, problem)
+
+    return
+  }
+
+  await playIntroIfFirstJoin(voiceChannel)
+
+  const reply = await askDj({
+    message,
+    settings,
+    request,
+    voiceChannel,
+  })
+
+  if (reply)
+    await message.reply(reply)
+}
+
+async function runCommand(store, message, command) {
+  const queue = player.getQueue(message.guildId)
 
   if (!queue) {
-    await message.reply(MESSAGES.nothingPlaying)
+    await refuse(message, store.get(message.guildId), MESSAGES.nothingPlaying)
 
     return
   }
 
   if (command.type === 'remove') {
-    await runRemoveCommand(message, queue, command.index)
+    await runRemoveCommand(store, message, queue, command.index)
 
     return
   }
 
   if (command.type === 'queue') {
     const view = queueView(queue, 1)
-    await channel.send({ embeds: [view.embed], components: [view.row] })
+    await message.channel.send({ embeds: [view.embed], components: [view.row] })
 
     return
   }
@@ -118,25 +197,19 @@ async function runCommand(message, guildId, channel, command) {
   await message.react('✅')
 }
 
-async function runRemoveCommand(message, queue, index) {
+async function runRemoveCommand(store, message, queue, index) {
   if (index === null) {
-    await message.reply(MESSAGES.removeUsage)
+    await refuse(message, store.get(message.guildId), MESSAGES.removeUsage)
 
     return
   }
 
-  if (index <= 0 || index > queue.songs.length) {
-    await message.reply(MESSAGES.removeOutOfRange)
+  if (!isPositionInQueue(queue, index)) {
+    await refuse(message, store.get(message.guildId), MESSAGES.removeOutOfRange)
 
     return
   }
 
-  if (index === 1)
-    await runMusicAction(queue, 'skip')
-  else
-    // distube's Queue.remove() deletes the whole queue; there is no single-song
-    // removal API, so remove from the internal song list directly.
-    queue.songs.splice(index - 1, 1)
-
+  await removeSongAt(queue, index)
   await message.react('✅')
 }

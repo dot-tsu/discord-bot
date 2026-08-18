@@ -18,7 +18,7 @@ async function main() {
 
   const store = await loadSettingsStore(SETTINGS_PATH)
 
-  setupMusicEvents()
+  setupMusicEvents(store)
   setupLeaveWhenEmpty()
   setupMessageRouter(store)
   setupInteractionRouter()

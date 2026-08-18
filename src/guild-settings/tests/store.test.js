@@ -21,8 +21,8 @@ test('store round-trips settings and keeps guilds independent', async () => {
     const store = await loadSettingsStore(filePath)
     expect(store.get('a').textChannelId).toBeNull()
 
-    await store.setTextChannel('a', '111')
-    await store.setTextChannel('b', '222')
+    await store.updateGuild('a', { textChannelId: '111' })
+    await store.updateGuild('b', { textChannelId: '222' })
 
     const reloaded = await loadSettingsStore(filePath)
     expect(reloaded.get('a').textChannelId).toBe('111')
@@ -31,12 +31,25 @@ test('store round-trips settings and keeps guilds independent', async () => {
   })
 })
 
+test('changing one setting leaves the others alone', async () => {
+  await withTempStore(async (filePath) => {
+    const store = await loadSettingsStore(filePath)
+
+    await store.updateGuild('a', { textChannelId: '111' })
+    await store.updateGuild('a', { persona: 'un dj cumbiero' })
+
+    const reloaded = await loadSettingsStore(filePath)
+    expect(reloaded.get('a').textChannelId).toBe('111')
+    expect(reloaded.get('a').persona).toBe('un dj cumbiero')
+  })
+})
+
 test('concurrent writes all persist', async () => {
   await withTempStore(async (filePath) => {
     const store = await loadSettingsStore(filePath)
 
     await Promise.all(
-      Array.from({ length: 20 }, (_, i) => store.setTextChannel(`g${i}`, `c${i}`)),
+      Array.from({ length: 20 }, (_, i) => store.updateGuild(`g${i}`, { textChannelId: `c${i}` })),
     )
 
     const reloaded = await loadSettingsStore(filePath)
