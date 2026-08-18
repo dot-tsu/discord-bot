@@ -2,7 +2,7 @@ import type { GuildTextBasedChannel, Message } from 'discord.js'
 import type { DisTubeError, Queue } from 'distube'
 import type { GuildSettingsStore } from '../guild-settings/store.ts'
 import type { Command } from './parse-command.ts'
-import { ChannelType, Events } from 'discord.js'
+import { ChannelType, Events, PermissionFlagsBits } from 'discord.js'
 import { MESSAGES } from '../messages/en.ts'
 import { playIntroIfFirstJoin } from '../music/intro.ts'
 import { queueView } from '../music/now-playing.ts'
@@ -10,13 +10,12 @@ import { player } from '../music/player.ts'
 import { runMusicAction } from '../music/queue-controls.ts'
 import { client } from './client.ts'
 import { configureTextChannel } from './configure-text-channel.ts'
-import { hasVoicePermissions } from './has-voice-permissions.ts'
 import { parseCommand } from './parse-command.ts'
 
 export function setupMessageRouter(store: GuildSettingsStore) {
   client.on(Events.MessageCreate, async (message) => {
     try {
-      if (message.author?.bot)
+      if (message.author.bot)
         return
 
       if (!message.guildId)
@@ -67,7 +66,10 @@ async function playQuery(message: Message, channel: GuildTextBasedChannel, query
     return
   }
 
-  if (!hasVoicePermissions(voiceChannel, message)) {
+  const botMember = message.guild?.members.me
+  const permissions = botMember ? voiceChannel.permissionsFor(botMember) : null
+
+  if (!permissions?.has(PermissionFlagsBits.Connect) || !permissions?.has(PermissionFlagsBits.Speak)) {
     await message.reply(MESSAGES.botPermissions)
 
     return

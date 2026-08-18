@@ -19,13 +19,19 @@ const YT_CLIENT_ARGS = ['--extractor-args', 'youtube:player_client=android']
 // the audio is downloaded to a local file and played from there. yt-dlp's own
 // wrapper merges stderr into its JSON parse, so spawn it directly, reading
 // stdout only and suppressing warnings.
-async function ytDlpJson(url: string, extraFlags: string[]) {
-  const proc = spawn('yt-dlp', ['--no-warnings', ...YT_CLIENT_ARGS, '--dump-single-json', '--skip-download', ...extraFlags, url])
+async function runYtDlp(args: string[]): Promise<{ code: number, stdout: string, stderr: string }> {
+  const proc = spawn('yt-dlp', args)
   let stdout = ''
   let stderr = ''
   proc.stdout.on('data', chunk => (stdout += chunk))
   proc.stderr.on('data', chunk => (stderr += chunk))
   const code = await new Promise<number>(resolve => proc.on('close', resolve))
+
+  return { code, stdout, stderr }
+}
+
+async function ytDlpJson(url: string, extraFlags: string[]) {
+  const { code, stdout, stderr } = await runYtDlp(['--no-warnings', ...YT_CLIENT_ARGS, '--dump-single-json', '--skip-download', ...extraFlags, url])
 
   if (code !== 0)
     throw new Error(stderr.trim() || `yt-dlp exited with code ${code}`)
@@ -42,10 +48,7 @@ async function downloadAudio(url: string, id: string) {
   if (existing)
     return existing
 
-  const proc = spawn('yt-dlp', ['--no-warnings', ...YT_CLIENT_ARGS, '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
-  let stderr = ''
-  proc.stderr.on('data', chunk => (stderr += chunk))
-  const code = await new Promise<number>(resolve => proc.on('close', resolve))
+  const { code, stderr } = await runYtDlp(['--no-warnings', ...YT_CLIENT_ARGS, '-f', 'ba/ba*', '-o', join(AUDIO_DIR, `${id}.%(ext)s`), url])
 
   if (code !== 0)
     throw new Error(`yt-dlp failed to download ${url}: ${stderr.trim() || `exit ${code}`}`)
