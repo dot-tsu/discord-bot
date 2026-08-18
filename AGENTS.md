@@ -7,6 +7,7 @@
 - `bun run dev` - Development with `--watch` flag for auto-reload
 - `bun run lint` - Linting via antfu/eslint-config
 - `bun test` - Run tests
+- `bun run test:e2e` - Run the live e2e suite (`e2e-test.mjs`) against the real Discord guild; it reads the token and LLM vars from `~/.config/dj/discord.env` (override with `E2E_ENV_FILE`, `E2E_GUILD`, `E2E_VOICE`, `E2E_TEXT`), and needs the bot service stopped so two clients don't share the token
 
 ## Requirements
 
