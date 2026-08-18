@@ -62,10 +62,9 @@ async function playQuery(message, channel, query) {
     return
   }
 
-  const botMember = message.guild?.members.me
-  const permissions = botMember ? voiceChannel.permissionsFor(botMember) : null
+  const permissions = voiceChannel.permissionsFor(message.guild.members.me)
 
-  if (!permissions?.has(PermissionFlagsBits.Connect) || !permissions?.has(PermissionFlagsBits.Speak)) {
+  if (!permissions?.has([PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
     await message.reply(MESSAGES.botPermissions)
 
     return

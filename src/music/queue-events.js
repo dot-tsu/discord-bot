@@ -28,9 +28,5 @@ export function setupMusicEvents() {
       console.info('[Music] Queue finished, leaving voice')
       player.voices.get(queue.id)?.leave()
     })
-    .on(Events.DISCONNECT, (queue) => {
-      console.info('[Music] Disconnected from voice, leaving')
-      player.voices.get(queue.id)?.leave()
-    })
     .on(Events.ERROR, error => console.error('[Music] DisTube error:', error))
 }

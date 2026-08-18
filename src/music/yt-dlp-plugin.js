@@ -115,7 +115,7 @@ export class YtDlpPlugin extends ExtractorPlugin {
   }
 
   async getStreamURL(song) {
-    const file = await downloadAudio(song.url ?? '', song.id)
+    const file = await downloadAudio(song.url, song.id)
 
     return `file://${join(AUDIO_DIR, file)}`
   }
@@ -138,7 +138,7 @@ export class YtDlpPlugin extends ExtractorPlugin {
         },
         views: info.view_count,
         likes: info.like_count,
-        ageRestricted: (info.age_limit ?? 0) >= 18,
+        ageRestricted: info.age_limit >= 18,
       },
       options,
     )

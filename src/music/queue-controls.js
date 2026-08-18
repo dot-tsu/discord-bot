@@ -1,8 +1,4 @@
-const MUSIC_ACTIONS = ['pause', 'resume', 'skip', 'shuffle', 'clear']
-
-export function isMusicAction(value) {
-  return MUSIC_ACTIONS.includes(value)
-}
+export const MUSIC_ACTIONS = ['pause', 'resume', 'skip', 'shuffle', 'clear']
 
 export async function runMusicAction(queue, action) {
   switch (action) {
@@ -22,5 +18,9 @@ export async function runMusicAction(queue, action) {
     case 'clear':
       await queue.stop()
       break
+    default:
+      // the deleted MusicAction union type enforced exhaustive cases; the throw
+      // keeps a new COMMAND_NAMES entry from silently no-opping with a checkmark
+      throw new Error(`Unknown music action: ${action}`)
   }
 }

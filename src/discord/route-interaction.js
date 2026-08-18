@@ -2,7 +2,7 @@ import { Events } from 'discord.js'
 import { MESSAGES } from '../messages/en.js'
 import { queueView } from '../music/now-playing.js'
 import { player } from '../music/player.js'
-import { isMusicAction, runMusicAction } from '../music/queue-controls.js'
+import { MUSIC_ACTIONS, runMusicAction } from '../music/queue-controls.js'
 import { client } from './client.js'
 
 export function setupInteractionRouter() {
@@ -48,7 +48,7 @@ async function handleNowPlayingButton(interaction) {
     return
   }
 
-  if (isMusicAction(action)) {
+  if (MUSIC_ACTIONS.includes(action)) {
     await runMusicAction(queue, action)
     await interaction.deferUpdate()
   }
