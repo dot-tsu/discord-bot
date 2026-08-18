@@ -17,7 +17,7 @@
 ## Configuration
 
 - Bot token goes in the `DISCORD_TOKEN` environment variable
-- The DJ's LLM key goes in the `OPENCODE_GO_KEY` environment variable (OpenCode Go subscription). Without it, the bot falls back to the plain `src/messages/en.js` texts (no DJ voice)
+- The DJ's LLM runs on any OpenAI-compatible `/chat/completions` endpoint, set via `OPENAI_BASE_URL` (full endpoint URL) and `OPENAI_API_KEY`, with `OPENAI_MODEL` optional (defaults to `deepseek-v4-flash`). Without them, the bot falls back to the plain `src/messages/en.js` texts (no DJ voice)
 - Per-guild settings are auto-persisted to `data/guilds.json` (gitignored)
 - Configure the listening channel by mentioning the bot and a channel: `@DJ #music`
 - Configure the DJ's personality (Manage Server permission needed): `@DJ persona you are a cumbiero dj`
