@@ -24,7 +24,10 @@ async function runYtDlp(args) {
   let stderr = ''
   proc.stdout.on('data', chunk => (stdout += chunk))
   proc.stderr.on('data', chunk => (stderr += chunk))
-  const code = await new Promise(resolve => proc.on('close', resolve))
+  const code = await new Promise((resolve, reject) => {
+    proc.on('error', reject)
+    proc.on('close', resolve)
+  })
 
   return { code, stdout, stderr }
 }

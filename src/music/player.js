@@ -10,17 +10,8 @@ export const player = new DisTube(client, {
   savePreviousSongs: false,
   ffmpeg: {
     args: {
-      global: { hide_banner: true },
-      input: {
-        reconnect: 1,
-        reconnect_streamed: 1,
-        reconnect_delay_max: 5,
-      },
-      output: {
-        ac: 2,
-        ar: 48000,
-        map: '0:a',
-      },
+      // the downloaded mp4 carries video too; extract only the audio stream
+      output: { map: '0:a' },
     },
   },
 })
