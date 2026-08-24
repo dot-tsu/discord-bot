@@ -1,7 +1,7 @@
 import { Events } from 'distube'
 import { announce } from '../dj/speak.js'
 import { MESSAGES } from '../messages/en.js'
-import { songDisplayName, updateNowPlaying } from './now-playing.js'
+import { showQueue, songDisplayName, updateNowPlaying } from './now-playing.js'
 import { player } from './player.js'
 
 function announceInCharacter(store, textChannel, guildId, text) {
@@ -41,6 +41,10 @@ export function setupMusicEvents(store) {
 
       if (!guildsWithSuppressedAnnouncements.has(queue.id))
         announceInCharacter(store, queue.textChannel, queue.id, MESSAGES.playlistAdded(name, playlist.songs.length))
+
+      void showQueue(queue.textChannel, queue).catch((error) => {
+        console.error('[Music] Failed to show queue after playlist:', error)
+      })
     })
     .on(Events.PLAY_SONG, (queue, song) => {
       console.info(`[Music] Now playing: ${songDisplayName(song)}`)

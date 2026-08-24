@@ -1,6 +1,6 @@
 import { Events } from 'discord.js'
 import { MESSAGES } from '../messages/en.js'
-import { queueView } from '../music/now-playing.js'
+import { queueView, showQueue } from '../music/now-playing.js'
 import { player } from '../music/player.js'
 import { MUSIC_ACTIONS, runMusicAction } from '../music/queue-controls.js'
 import { client } from './client.js'
@@ -42,8 +42,8 @@ async function handleNowPlayingButton(interaction) {
   }
 
   if (action === 'queue') {
-    const view = queueView(queue, 1)
-    await interaction.reply({ embeds: [view.embed], components: [view.row] })
+    await interaction.deferUpdate()
+    await showQueue(queue.textChannel, queue)
 
     return
   }
@@ -84,12 +84,6 @@ async function handleQueuePageButton(interaction) {
 }
 
 async function updateQueueMessage(interaction, payload) {
-  if (interaction.message.interactionMetadata) {
-    await interaction.update(payload)
-
-    return
-  }
-
   await interaction.deferUpdate()
   await interaction.message.edit(payload)
 }
