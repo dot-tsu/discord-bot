@@ -13,7 +13,7 @@ import { parseCommand } from './parse-command.js'
 const MAX_PERSONA_LENGTH = 500
 const DJ_REQUEST_COOLDOWN_MS = 15_000
 
-const lastDjRequestAt = new Map()
+const lastDjRequestAtByChannel = new Map()
 
 export function setupMessageRouter(store) {
   client.on(Events.MessageCreate, async (message) => {
@@ -143,7 +143,7 @@ async function playQuery(store, message, query) {
 }
 
 async function askDjInChannel(store, message, request) {
-  const lastRequest = lastDjRequestAt.get(message.author.id) ?? 0
+  const lastRequest = lastDjRequestAtByChannel.get(message.channelId) ?? 0
 
   if (Date.now() - lastRequest < DJ_REQUEST_COOLDOWN_MS) {
     await message.reply(MESSAGES.djBusy)
@@ -151,29 +151,36 @@ async function askDjInChannel(store, message, request) {
     return
   }
 
-  lastDjRequestAt.set(message.author.id, Date.now())
+  lastDjRequestAtByChannel.set(message.channelId, Date.now())
 
-  const voiceChannel = message.member?.voice?.channel ?? null
-  const settings = store.get(message.guildId)
-  const problem = voiceChannelProblem(voiceChannel, message.guild)
+  const giveUpOnRequest = () => {
+    lastDjRequestAtByChannel.delete(message.channelId)
 
-  if (problem) {
-    await refuse(message, settings, problem)
+    return message.react('❌')
+  }
+  let reply
+
+  try {
+    reply = await askDj({
+      message,
+      settings: store.get(message.guildId),
+      request,
+      voiceChannel: message.member?.voice?.channel ?? null,
+    })
+  }
+  catch (error) {
+    console.error('[DJ] Request failed:', error)
+    await giveUpOnRequest()
 
     return
   }
 
-  await playIntroIfFirstJoin(voiceChannel)
+  // A null reply means the model never said anything, which the person would
+  // otherwise read as being ignored.
+  if (!reply)
+    return giveUpOnRequest()
 
-  const reply = await askDj({
-    message,
-    settings,
-    request,
-    voiceChannel,
-  })
-
-  if (reply)
-    await message.reply(reply)
+  await message.reply(reply)
 }
 
 async function runCommand(store, message, command) {

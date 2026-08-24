@@ -1,3 +1,4 @@
+import { playIntroIfFirstJoin } from '../music/intro.js'
 import { player, ytDlpPlugin } from '../music/player.js'
 import { isPositionInQueue, MUSIC_ACTIONS, removeSongAt, runMusicAction } from '../music/queue-controls.js'
 import { withAnnouncementsSuppressed } from '../music/queue-events.js'
@@ -68,6 +69,8 @@ async function queueSongs(songs, context) {
 
   if (!voiceChannel)
     return { error: 'they are not in a voice channel, so there is nowhere to play' }
+
+  await playIntroIfFirstJoin(voiceChannel)
 
   const resolved = (await Promise.all(
     wanted.map(song => ytDlpPlugin.searchSong(song, { member }).catch((error) => {
