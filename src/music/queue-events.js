@@ -54,5 +54,12 @@ export function setupMusicEvents(store) {
       console.info('[Music] Queue finished, leaving voice')
       player.voices.get(queue.id)?.leave()
     })
-    .on(Events.ERROR, error => console.error('[Music] DisTube error:', error))
+    .on(Events.ERROR, (error, queue) => {
+      console.error('[Music] DisTube error:', error)
+
+      if (!queue)
+        return
+
+      announceInCharacter(store, queue.textChannel, queue.id, MESSAGES.playbackError)
+    })
 }
