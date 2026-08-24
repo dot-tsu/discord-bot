@@ -77,10 +77,12 @@ function nowPlayingEmbed(queue, song) {
   return new EmbedBuilder()
     .setTitle(songDisplayName(song))
     .setURL(song.url ?? null)
+    .setThumbnail(song.thumbnail ?? null)
     .addFields(
       { name: 'Duration', value: song.formattedDuration, inline: true },
-      { name: 'In queue', value: String(Math.max(queue.songs.length - 1, 0)), inline: true },
+      { name: 'Requested by', value: song.member?.displayName ?? 'Unknown', inline: true },
     )
+    .setFooter({ text: `${Math.max(queue.songs.length - 1, 0)} in queue` })
 }
 
 function nowPlayingRow() {
