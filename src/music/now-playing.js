@@ -5,6 +5,7 @@ const NOW_PLAYING_REPOST_DEBOUNCE_MS = 2_000
 const nowPlayingMessages = new Map()
 const repostTimersByGuild = new Map()
 const messageWritesByGuild = new Map()
+const queueMessages = new Map()
 
 export function songDisplayName(song) {
   return song.name ?? song.url ?? 'Unknown song'
@@ -92,9 +93,10 @@ function nowPlayingRow() {
   )
 }
 
-export function queueView(queue, page) {
+export function queueView(queue, requestedPage) {
   const total = queue.songs.length
   const pageCount = Math.max(Math.ceil(total / QUEUE_PAGE_SIZE), 1)
+  const page = Math.min(Math.max(requestedPage, 1), pageCount)
   const start = (page - 1) * QUEUE_PAGE_SIZE
   const lines = queue.songs
     .slice(start, start + QUEUE_PAGE_SIZE)
@@ -119,4 +121,26 @@ export function queueView(queue, page) {
   )
 
   return { embed, row }
+}
+
+export async function showQueue(channel, queue) {
+  if (!channel)
+    return
+
+  await withQueuedWrites(queue.id, () => writeQueueView(channel, queue))
+  scheduleNowPlayingRepost(queue)
+}
+
+async function writeQueueView(channel, queue) {
+  const { embed, row } = queueView(queue, 1)
+  const existing = queueMessages.get(queue.id)
+
+  if (existing?.deletable) {
+    await existing.delete().catch((error) => {
+      console.error('[Music] Failed to delete old queue message:', error)
+    })
+  }
+
+  const sent = await channel.send({ embeds: [embed], components: [row] })
+  queueMessages.set(queue.id, sent)
 }
