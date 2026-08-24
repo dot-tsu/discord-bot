@@ -20,11 +20,35 @@ function withQueuedWrites(guildId, write) {
   const next = previous.catch(() => {}).then(write)
   messageWritesByGuild.set(guildId, next)
 
+  void next.catch(() => {}).then(() => {
+    if (messageWritesByGuild.get(guildId) === next)
+      messageWritesByGuild.delete(guildId)
+  })
+
   return next
 }
 
+export function clearPlaybackMessages(guildId) {
+  return withQueuedWrites(guildId, async () => {
+    await deleteTrackedMessage(nowPlayingMessages, guildId, 'now playing message')
+    await deleteTrackedMessage(queueMessages, guildId, 'queue message')
+  })
+}
+
+async function deleteTrackedMessage(messagesByGuild, guildId, label) {
+  const message = messagesByGuild.get(guildId)
+  messagesByGuild.delete(guildId)
+
+  if (!message?.deletable)
+    return
+
+  await message.delete().catch((error) => {
+    console.error(`[Music] Failed to delete ${label}:`, error)
+  })
+}
+
 async function writeNowPlaying(queue, song) {
-  if (!song)
+  if (!song || queue.songs.length === 0)
     return
 
   const channel = queue.textChannel
@@ -139,13 +163,7 @@ export async function showQueue(channel, queue) {
 
 async function writeQueueView(channel, queue) {
   const { embed, row } = queueView(queue, 1)
-  const existing = queueMessages.get(queue.id)
-
-  if (existing?.deletable) {
-    await existing.delete().catch((error) => {
-      console.error('[Music] Failed to delete old queue message:', error)
-    })
-  }
+  await deleteTrackedMessage(queueMessages, queue.id, 'old queue message')
 
   const sent = await channel.send({ embeds: [embed], components: [row] })
   queueMessages.set(queue.id, sent)

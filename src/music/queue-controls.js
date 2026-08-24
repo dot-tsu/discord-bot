@@ -1,4 +1,4 @@
-import { updateNowPlaying } from './now-playing.js'
+import { clearPlaybackMessages, updateNowPlaying } from './now-playing.js'
 
 export const MUSIC_ACTIONS = ['pause', 'resume', 'radio', 'skip', 'shuffle', 'clear']
 
@@ -29,16 +29,19 @@ export async function runMusicAction(queue, action) {
       await updateNowPlaying(queue, queue.songs[0])
       break
     case 'skip':
-      if (queue.songs.length > 1 || queue.autoplay)
+      if (queue.songs.length > 1 || queue.autoplay) {
         await queue.skip()
-      else
-        await queue.stop()
+      }
+      else {
+        await runMusicAction(queue, 'clear')
+      }
       break
     case 'shuffle':
       await queue.shuffle()
       break
     case 'clear':
       await queue.stop()
+      await clearPlaybackMessages(queue.id)
       break
     default:
       // the deleted MusicAction union type enforced exhaustive cases; the throw
