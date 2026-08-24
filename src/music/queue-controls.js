@@ -1,4 +1,6 @@
-export const MUSIC_ACTIONS = ['pause', 'resume', 'skip', 'shuffle', 'clear']
+import { updateNowPlaying } from './now-playing.js'
+
+export const MUSIC_ACTIONS = ['pause', 'resume', 'radio', 'skip', 'shuffle', 'clear']
 
 export function isPositionInQueue(queue, position) {
   return position > 0 && position <= queue.songs.length
@@ -21,6 +23,10 @@ export async function runMusicAction(queue, action) {
     case 'pause':
     case 'resume':
       await (queue.paused ? queue.resume() : queue.pause())
+      break
+    case 'radio':
+      queue.toggleAutoplay()
+      await updateNowPlaying(queue, queue.songs[0])
       break
     case 'skip':
       if (queue.songs.length > 1 || queue.autoplay)
