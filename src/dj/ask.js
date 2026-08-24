@@ -4,8 +4,8 @@ import { buildDjPrompt } from './persona.js'
 import { DJ_TOOLS, runTool } from './tools.js'
 
 const DJ_TIMEOUT_MS = 25_000
-// One round to call the tools, one to speak about what happened. The third is
-// slack for a follow-up call; past that the model is going in circles.
+// Three rounds to act through the tools, then one forced spoken answer: a
+// model that keeps calling tools until the cap would otherwise act in silence.
 const MAX_TOOL_ROUNDS = 3
 
 function parseToolArguments(raw) {
@@ -45,12 +45,16 @@ export async function askDj({ message, settings, request, voiceChannel }) {
     member: message.member,
   }
   const exchange = [...recallConversation(message.channelId), { role: 'user', content: request }]
-
-  void message.channel.sendTyping().catch(() => {})
+  const conversationWithRules = () => [
+    { role: 'system', content: buildDjPrompt(message.guildId, settings) },
+    ...exchange,
+  ]
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    void message.channel.sendTyping().catch(() => {})
+
     const reply = await requestCompletion({
-      messages: [{ role: 'system', content: buildDjPrompt(message.guildId, settings) }, ...exchange],
+      messages: conversationWithRules(),
       tools: DJ_TOOLS,
       timeoutMs: DJ_TIMEOUT_MS,
     })
@@ -67,7 +71,16 @@ export async function askDj({ message, settings, request, voiceChannel }) {
       exchange.push(await resolveToolCall(call, context))
   }
 
-  // No reply ever came out, so the exchange holds dangling tool calls. Nothing
-  // gets remembered: the next request starts from a clean conversation.
-  return null
+  // Tools off for the closing call, so the answer cannot carry more dangling
+  // tool calls and the conversation stays safe to remember.
+  void message.channel.sendTyping().catch(() => {})
+
+  const reply = await requestCompletion({
+    messages: conversationWithRules(),
+    timeoutMs: DJ_TIMEOUT_MS,
+  })
+
+  rememberConversation(message.channelId, [...exchange, reply])
+
+  return reply.content?.trim() || null
 }

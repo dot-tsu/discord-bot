@@ -13,13 +13,18 @@ export async function requestCompletion({ messages, tools, timeoutMs }) {
 
   const model = process.env.OPENAI_MODEL ?? DEFAULT_MODEL
 
+  // Some OpenAI-compatible endpoints ignore tools unless tool_choice says auto.
+  const body = tools
+    ? { model, messages, tools, tool_choice: 'auto' }
+    : { model, messages }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(tools ? { model, messages, tools } : { model, messages }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
   })
 
