@@ -24,13 +24,16 @@ function withQueuedWrites(guildId, write) {
 }
 
 async function writeNowPlaying(queue, song) {
+  if (!song)
+    return
+
   const channel = queue.textChannel
 
   if (!channel)
     return
 
   const embed = nowPlayingEmbed(queue, song)
-  const row = nowPlayingRow()
+  const row = nowPlayingRow(queue)
   const existing = nowPlayingMessages.get(queue.id)
 
   if (existing?.editable && existing.channelId === channel.id) {
@@ -85,10 +88,11 @@ function nowPlayingEmbed(queue, song) {
     .setFooter({ text: `${Math.max(queue.songs.length - 1, 0)} in queue` })
 }
 
-function nowPlayingRow() {
+function nowPlayingRow(queue) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('np:pause').setLabel('Pause / resume').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('np:radio').setLabel('Radio').setStyle(queue.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:shuffle').setLabel('Shuffle').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:clear').setLabel('Clear').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('np:queue').setLabel('Queue').setStyle(ButtonStyle.Secondary),

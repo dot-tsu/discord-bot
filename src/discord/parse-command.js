@@ -1,4 +1,4 @@
-const COMMAND_NAMES = ['skip', 'pause', 'resume', 'queue', 'shuffle', 'clear', 'remove', 'persona']
+const COMMAND_NAMES = ['skip', 'pause', 'resume', 'radio', 'queue', 'shuffle', 'clear', 'remove', 'persona']
 
 function isConfigurationCommand(content, botId, botMentioned, channelMentionIds) {
   const [channelMentionId] = channelMentionIds

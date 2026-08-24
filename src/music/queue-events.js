@@ -54,6 +54,10 @@ export function setupMusicEvents(store) {
       console.info('[Music] Queue finished, leaving voice')
       player.voices.get(queue.id)?.leave()
     })
+    .on(Events.NO_RELATED, (queue) => {
+      console.info('[Music] Radio found no related song, leaving voice')
+      player.voices.get(queue.id)?.leave()
+    })
     .on(Events.ERROR, (error, queue) => {
       console.error('[Music] DisTube error:', error)
 
