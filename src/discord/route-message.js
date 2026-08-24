@@ -3,7 +3,7 @@ import { askDj } from '../dj/ask.js'
 import { refuse, say } from '../dj/speak.js'
 import { MESSAGES } from '../messages/en.js'
 import { playIntroIfFirstJoin } from '../music/intro.js'
-import { queueView } from '../music/now-playing.js'
+import { queueView, scheduleNowPlayingRepost } from '../music/now-playing.js'
 import { player } from '../music/player.js'
 import { isPositionInQueue, removeSongAt, runMusicAction } from '../music/queue-controls.js'
 import { client } from './client.js'
@@ -59,6 +59,11 @@ export function setupMessageRouter(store) {
     catch (error) {
       console.error('[Discord] Message handling error:', error)
     }
+
+    const queue = player.getQueue(message.guildId)
+
+    if (queue && queue.textChannel?.id === message.channelId)
+      scheduleNowPlayingRepost(queue)
   })
 }
 
