@@ -1,13 +1,28 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js'
 
 const QUEUE_PAGE_SIZE = 10
+const NOW_PLAYING_REPOST_DEBOUNCE_MS = 2_000
 const nowPlayingMessages = new Map()
+const repostTimersByGuild = new Map()
+const messageWritesByGuild = new Map()
 
 export function songDisplayName(song) {
   return song.name ?? song.url ?? 'Unknown song'
 }
 
-export async function updateNowPlaying(queue, song) {
+export function updateNowPlaying(queue, song) {
+  return withQueuedWrites(queue.id, () => writeNowPlaying(queue, song))
+}
+
+function withQueuedWrites(guildId, write) {
+  const previous = messageWritesByGuild.get(guildId) ?? Promise.resolve()
+  const next = previous.catch(() => {}).then(write)
+  messageWritesByGuild.set(guildId, next)
+
+  return next
+}
+
+async function writeNowPlaying(queue, song) {
   const channel = queue.textChannel
 
   if (!channel)
@@ -17,7 +32,7 @@ export async function updateNowPlaying(queue, song) {
   const row = nowPlayingRow()
   const existing = nowPlayingMessages.get(queue.id)
 
-  if (existing?.editable) {
+  if (existing?.editable && existing.channelId === channel.id) {
     try {
       await existing.edit({ embeds: [embed], components: [row] })
 
@@ -25,12 +40,36 @@ export async function updateNowPlaying(queue, song) {
     }
     catch (error) {
       console.error('[Music] Failed to edit now playing message:', error)
-      nowPlayingMessages.delete(queue.id)
+
+      if (nowPlayingMessages.get(queue.id) === existing)
+        nowPlayingMessages.delete(queue.id)
     }
   }
 
   const sent = await channel.send({ embeds: [embed], components: [row] })
   nowPlayingMessages.set(queue.id, sent)
+}
+
+export function scheduleNowPlayingRepost(queue) {
+  clearTimeout(repostTimersByGuild.get(queue.id))
+
+  repostTimersByGuild.set(queue.id, setTimeout(() => {
+    repostTimersByGuild.delete(queue.id)
+    void withQueuedWrites(queue.id, () => repostNowPlaying(queue)).catch((error) => {
+      console.error('[Music] Failed to repost now playing message:', error)
+    })
+  }, NOW_PLAYING_REPOST_DEBOUNCE_MS))
+}
+
+async function repostNowPlaying(queue) {
+  const existing = nowPlayingMessages.get(queue.id)
+
+  if (!existing || !existing.deletable)
+    return
+
+  await existing.delete()
+  nowPlayingMessages.delete(queue.id)
+  await writeNowPlaying(queue, queue.songs[0])
 }
 
 function nowPlayingEmbed(queue, song) {
