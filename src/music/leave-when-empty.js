@@ -1,6 +1,7 @@
 import { Events } from 'discord.js'
 import { isVoiceChannelEmpty } from 'distube'
 import { client } from '../discord/client.js'
+import { clearPlaybackMessages } from './now-playing.js'
 import { player } from './player.js'
 
 export function setupLeaveWhenEmpty() {
@@ -14,6 +15,7 @@ export function setupLeaveWhenEmpty() {
       return
 
     console.info('[Music] Voice channel empty, leaving')
+    void clearPlaybackMessages(oldState.guild.id)
     voice.leave()
   })
 }

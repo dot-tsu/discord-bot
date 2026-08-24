@@ -1,7 +1,7 @@
 import { Events } from 'distube'
 import { announce } from '../dj/speak.js'
 import { MESSAGES } from '../messages/en.js'
-import { showQueue, songDisplayName, updateNowPlaying } from './now-playing.js'
+import { clearPlaybackMessages, showQueue, songDisplayName, updateNowPlaying } from './now-playing.js'
 import { player } from './player.js'
 
 function announceInCharacter(store, textChannel, guildId, text) {
@@ -52,10 +52,12 @@ export function setupMusicEvents(store) {
     })
     .on(Events.FINISH, (queue) => {
       console.info('[Music] Queue finished, leaving voice')
+      void clearPlaybackMessages(queue.id)
       player.voices.get(queue.id)?.leave()
     })
     .on(Events.NO_RELATED, (queue) => {
       console.info('[Music] Radio found no related song, leaving voice')
+      void clearPlaybackMessages(queue.id)
       player.voices.get(queue.id)?.leave()
     })
     .on(Events.ERROR, (error, queue) => {
