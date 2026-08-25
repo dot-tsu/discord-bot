@@ -1,3 +1,5 @@
+import { clampMessage } from '../discord/message-limit.js'
+import { MESSAGES } from '../messages/en.js'
 import { requestCompletion } from './client.js'
 import { recallConversation, rememberConversation } from './history.js'
 import { buildDjPrompt } from './persona.js'
@@ -18,7 +20,7 @@ function parseToolArguments(raw) {
 }
 
 async function resolveToolCall(call, context) {
-  const toolResult = async () => {
+  const outcome = async () => {
     const args = parseToolArguments(call.function.arguments)
 
     if (!args)
@@ -28,12 +30,14 @@ async function resolveToolCall(call, context) {
   }
 
   try {
-    return { role: 'tool', tool_call_id: call.id, content: JSON.stringify(await toolResult()) }
+    const result = await outcome()
+
+    return { message: { role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) }, acted: !result.error }
   }
   catch (error) {
     console.error(`[DJ] Tool "${call.function.name}" failed:`, error)
 
-    return { role: 'tool', tool_call_id: call.id, content: JSON.stringify({ error: 'the player could not do that' }) }
+    return { message: { role: 'tool', tool_call_id: call.id, content: JSON.stringify({ error: 'the player could not do that' }) }, acted: false }
   }
 }
 
@@ -50,37 +54,55 @@ export async function askDj({ message, settings, request, voiceChannel }) {
     ...exchange,
   ]
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+  let acted = false
+
+  try {
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      void message.channel.sendTyping().catch(() => {})
+
+      const reply = await requestCompletion({
+        messages: conversationWithRules(),
+        tools: DJ_TOOLS,
+        timeoutMs: DJ_TIMEOUT_MS,
+      })
+
+      exchange.push(reply)
+
+      if (!reply.tool_calls?.length) {
+        rememberConversation(message.channelId, exchange)
+
+        return clampMessage(reply.content) ?? (acted ? MESSAGES.djActed : null)
+      }
+
+      for (const call of reply.tool_calls) {
+        const { message: toolMessage, acted: toolActed } = await resolveToolCall(call, context)
+
+        acted ||= toolActed
+        exchange.push(toolMessage)
+      }
+    }
+
+    // Tools off for the closing call, so the answer cannot carry more dangling
+    // tool calls and the conversation stays safe to remember. Endpoints that
+    // emit tool_calls even when none were offered get sanitized away here.
     void message.channel.sendTyping().catch(() => {})
 
     const reply = await requestCompletion({
       messages: conversationWithRules(),
-      tools: DJ_TOOLS,
       timeoutMs: DJ_TIMEOUT_MS,
     })
 
-    exchange.push(reply)
+    rememberConversation(message.channelId, [...exchange, { role: 'assistant', content: reply.content ?? '' }])
 
-    if (!reply.tool_calls?.length) {
-      rememberConversation(message.channelId, exchange)
-
-      return reply.content?.trim() || null
-    }
-
-    for (const call of reply.tool_calls)
-      exchange.push(await resolveToolCall(call, context))
+    return clampMessage(reply.content) ?? (acted ? MESSAGES.djActed : null)
   }
+  catch (error) {
+    if (!acted)
+      throw error
 
-  // Tools off for the closing call, so the answer cannot carry more dangling
-  // tool calls and the conversation stays safe to remember.
-  void message.channel.sendTyping().catch(() => {})
+    console.error('[DJ] Request failed after acting:', error)
+    rememberConversation(message.channelId, exchange)
 
-  const reply = await requestCompletion({
-    messages: conversationWithRules(),
-    timeoutMs: DJ_TIMEOUT_MS,
-  })
-
-  rememberConversation(message.channelId, [...exchange, reply])
-
-  return reply.content?.trim() || null
+    return MESSAGES.djActed
+  }
 }

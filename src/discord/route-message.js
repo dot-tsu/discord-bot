@@ -14,6 +14,7 @@ const MAX_PERSONA_LENGTH = 500
 const DJ_REQUEST_COOLDOWN_MS = 15_000
 
 const lastDjRequestAtByChannel = new Map()
+const djRequestsInFlightByChannel = new Set()
 
 export function setupMessageRouter(store) {
   client.on(Events.MessageCreate, async (message) => {
@@ -143,44 +144,37 @@ async function playQuery(store, message, query) {
 }
 
 async function askDjInChannel(store, message, request) {
-  const lastRequest = lastDjRequestAtByChannel.get(message.channelId) ?? 0
+  const isBusy = djRequestsInFlightByChannel.has(message.channelId)
+    || Date.now() - (lastDjRequestAtByChannel.get(message.channelId) ?? 0) < DJ_REQUEST_COOLDOWN_MS
 
-  if (Date.now() - lastRequest < DJ_REQUEST_COOLDOWN_MS) {
+  if (isBusy) {
     await message.reply(MESSAGES.djBusy)
 
     return
   }
 
-  lastDjRequestAtByChannel.set(message.channelId, Date.now())
-
-  const giveUpOnRequest = () => {
-    lastDjRequestAtByChannel.delete(message.channelId)
-
-    return message.react('❌')
-  }
-  let reply
+  djRequestsInFlightByChannel.add(message.channelId)
 
   try {
-    reply = await askDj({
+    const reply = await askDj({
       message,
       settings: store.get(message.guildId),
       request,
       voiceChannel: message.member?.voice?.channel ?? null,
     })
+
+    // A null reply means the model never said anything, which the person would
+    // otherwise read as being ignored.
+    await (reply ? message.reply(reply) : message.react('❌'))
   }
   catch (error) {
     console.error('[DJ] Request failed:', error)
-    await giveUpOnRequest()
-
-    return
+    await message.react('❌')
   }
-
-  // A null reply means the model never said anything, which the person would
-  // otherwise read as being ignored.
-  if (!reply)
-    return giveUpOnRequest()
-
-  await message.reply(reply)
+  finally {
+    djRequestsInFlightByChannel.delete(message.channelId)
+    lastDjRequestAtByChannel.set(message.channelId, Date.now())
+  }
 }
 
 async function runCommand(store, message, command) {

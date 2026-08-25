@@ -18,7 +18,7 @@
 ## Configuration
 
 - Bot token goes in the `DISCORD_TOKEN` environment variable
-- The DJ's LLM runs on any OpenAI-compatible `/chat/completions` endpoint, set via `OPENAI_BASE_URL` (full endpoint URL) and `OPENAI_API_KEY`, with `OPENAI_MODEL` optional (defaults to `deepseek-v4-flash`). Without them, the bot stays silent on DJ paths (a ❌ reaction on refusals) and only the deterministic commands keep working
+- The DJ's LLM runs on any OpenAI-compatible `/chat/completions` endpoint, set via `OPENAI_BASE_URL` (full endpoint URL) and `OPENAI_API_KEY`, with `OPENAI_MODEL` optional (defaults to `deepseek-v4-flash`). Without them, the DJ can't hold a conversation or act on requests (a ❌ reaction marks the failure), announcements go out as plain text instead of in character, and only the deterministic commands keep working
 - Per-guild settings are auto-persisted to `data/guilds.json` (gitignored)
 - Configure the listening channel by mentioning the bot and a channel: `@DJ #music`
 - Configure the DJ's personality (Manage Server permission needed): `@DJ persona you are a cumbiero dj`

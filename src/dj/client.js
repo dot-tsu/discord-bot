@@ -31,7 +31,11 @@ export async function requestCompletion({ messages, tools, timeoutMs }) {
   if (!response.ok)
     throw new Error(`LLM endpoint responded ${response.status}: ${await response.text()}`)
 
-  const { choices } = await response.json()
+  const payload = await response.json()
+  const message = payload.choices?.[0]?.message
 
-  return choices[0].message
+  if (!message)
+    throw new Error(`LLM endpoint returned no choices: ${JSON.stringify(payload).slice(0, 200)}`)
+
+  return message
 }
