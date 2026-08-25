@@ -1,4 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js'
+import { player } from './player.js'
 
 const QUEUE_PAGE_SIZE = 10
 const NOW_PLAYING_REPOST_DEBOUNCE_MS = 2_000
@@ -29,6 +30,9 @@ function withQueuedWrites(guildId, write) {
 }
 
 export function clearPlaybackMessages(guildId) {
+  clearTimeout(repostTimersByGuild.get(guildId))
+  repostTimersByGuild.delete(guildId)
+
   return withQueuedWrites(guildId, async () => {
     await deleteTrackedMessage(nowPlayingMessages, guildId, 'now playing message')
     await deleteTrackedMessage(queueMessages, guildId, 'queue message')
@@ -79,24 +83,27 @@ async function writeNowPlaying(queue, song) {
 }
 
 export function scheduleNowPlayingRepost(queue) {
-  clearTimeout(repostTimersByGuild.get(queue.id))
+  const guildId = queue.id
 
-  repostTimersByGuild.set(queue.id, setTimeout(() => {
-    repostTimersByGuild.delete(queue.id)
-    void withQueuedWrites(queue.id, () => repostNowPlaying(queue)).catch((error) => {
+  clearTimeout(repostTimersByGuild.get(guildId))
+
+  repostTimersByGuild.set(guildId, setTimeout(() => {
+    repostTimersByGuild.delete(guildId)
+    void withQueuedWrites(guildId, () => repostNowPlaying(guildId)).catch((error) => {
       console.error('[Music] Failed to repost now playing message:', error)
     })
   }, NOW_PLAYING_REPOST_DEBOUNCE_MS))
 }
 
-async function repostNowPlaying(queue) {
-  const existing = nowPlayingMessages.get(queue.id)
+// resolve the live queue by guild id: the timer's queue may be gone by the time it fires,
+// and writing through the dead queue would clobber the replacement queue's card
+async function repostNowPlaying(guildId) {
+  const queue = player.getQueue(guildId)
 
-  if (!existing || !existing.deletable)
+  if (!queue || !nowPlayingMessages.has(guildId))
     return
 
-  await existing.delete()
-  nowPlayingMessages.delete(queue.id)
+  await deleteTrackedMessage(nowPlayingMessages, guildId, 'old now playing message')
   await writeNowPlaying(queue, queue.songs[0])
 }
 
@@ -114,7 +121,7 @@ function nowPlayingEmbed(queue, song) {
 
 function nowPlayingRow(queue) {
   return new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('np:pause').setLabel('Pause / resume').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('np:toggle').setLabel('Pause / resume').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:radio').setLabel('Radio').setStyle(queue.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('np:shuffle').setLabel('Shuffle').setStyle(ButtonStyle.Secondary),

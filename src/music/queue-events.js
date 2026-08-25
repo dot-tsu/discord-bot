@@ -13,16 +13,21 @@ function announceInCharacter(store, textChannel, guildId, text) {
 
 // The dj's own tool calls add songs too; announcing each one would flood the
 // channel and spend a request per song on messages the dj is already phrasing.
-const guildsWithSuppressedAnnouncements = new Set()
+const suppressionDepthByGuild = new Map()
 
 export async function withAnnouncementsSuppressed(guildId, run) {
-  guildsWithSuppressedAnnouncements.add(guildId)
+  suppressionDepthByGuild.set(guildId, (suppressionDepthByGuild.get(guildId) ?? 0) + 1)
 
   try {
     await run()
   }
   finally {
-    guildsWithSuppressedAnnouncements.delete(guildId)
+    const depth = suppressionDepthByGuild.get(guildId) - 1
+
+    if (depth > 0)
+      suppressionDepthByGuild.set(guildId, depth)
+    else
+      suppressionDepthByGuild.delete(guildId)
   }
 }
 
@@ -32,14 +37,14 @@ export function setupMusicEvents(store) {
       const name = songDisplayName(song)
       console.info(`[Music] Song added to queue: ${name}`)
 
-      if (!guildsWithSuppressedAnnouncements.has(queue.id))
+      if (!suppressionDepthByGuild.has(queue.id))
         announceInCharacter(store, queue.textChannel, queue.id, MESSAGES.songAdded(name))
     })
     .on(Events.ADD_LIST, (queue, playlist) => {
       const name = playlist.name ?? playlist.url ?? 'Playlist'
       console.info(`[Music] Playlist added to queue: ${name} (${playlist.songs.length} songs)`)
 
-      if (!guildsWithSuppressedAnnouncements.has(queue.id))
+      if (!suppressionDepthByGuild.has(queue.id))
         announceInCharacter(store, queue.textChannel, queue.id, MESSAGES.playlistAdded(name, playlist.songs.length))
 
       void showQueue(queue.textChannel, queue).catch((error) => {

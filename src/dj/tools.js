@@ -4,6 +4,9 @@ import { isPositionInQueue, MUSIC_ACTIONS, removeSongAt, runMusicAction } from '
 import { withAnnouncementsSuppressed } from '../music/queue-events.js'
 
 const MAX_SONGS_PER_REQUEST = 10
+// Buttons get a blind toggle, but the model must name the outcome; toggle is a
+// coin flip until it can see the paused state.
+const PLAYBACK_ACTIONS = MUSIC_ACTIONS.filter(action => action !== 'toggle')
 
 export const DJ_TOOLS = [
   {
@@ -32,7 +35,7 @@ export const DJ_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          action: { type: 'string', enum: MUSIC_ACTIONS },
+          action: { type: 'string', enum: PLAYBACK_ACTIONS },
         },
         required: ['action'],
       },
@@ -104,7 +107,7 @@ export async function runTool(name, args, context) {
     return { error: 'nothing is playing right now' }
 
   if (name === 'control_playback') {
-    if (!MUSIC_ACTIONS.includes(args.action))
+    if (!PLAYBACK_ACTIONS.includes(args.action))
       return { error: `cannot do "${args.action}"` }
 
     await runMusicAction(queue, args.action)

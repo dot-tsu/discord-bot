@@ -1,8 +1,8 @@
-import { Events } from 'discord.js'
+import { Events, MessageFlags } from 'discord.js'
 import { MESSAGES } from '../messages/en.js'
 import { queueView, showQueue } from '../music/now-playing.js'
 import { player } from '../music/player.js'
-import { MUSIC_ACTIONS, runMusicAction } from '../music/queue-controls.js'
+import { runMusicAction } from '../music/queue-controls.js'
 import { client } from './client.js'
 
 export function setupInteractionRouter() {
@@ -36,7 +36,7 @@ async function handleNowPlayingButton(interaction) {
   const action = interaction.customId.slice('np:'.length)
 
   if (!queue) {
-    await interaction.reply({ content: MESSAGES.nothingPlaying, ephemeral: true })
+    await interaction.reply({ content: MESSAGES.nothingPlaying, flags: MessageFlags.Ephemeral })
 
     return
   }
@@ -48,10 +48,9 @@ async function handleNowPlayingButton(interaction) {
     return
   }
 
-  if (MUSIC_ACTIONS.includes(action)) {
-    await runMusicAction(queue, action)
-    await interaction.deferUpdate()
-  }
+  // ack before acting: distube actions can exceed the 3s window while downloading audio
+  await interaction.deferUpdate()
+  await runMusicAction(queue, action)
 }
 
 async function handleQueuePageButton(interaction) {
@@ -62,6 +61,13 @@ async function handleQueuePageButton(interaction) {
 
   const [direction, rawPage] = interaction.customId.slice('nq:'.length).split(':')
   const page = Number.parseInt(rawPage, 10)
+
+  if (!Number.isInteger(page)) {
+    await interaction.deferUpdate()
+
+    return
+  }
+
   const queue = player.getQueue(guildId)
 
   if (!queue) {

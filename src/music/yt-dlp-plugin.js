@@ -22,6 +22,9 @@ async function runYtDlp(args) {
   const proc = spawn('yt-dlp', args)
   let stdout = ''
   let stderr = ''
+  // multi-byte UTF-8 characters can split across chunk boundaries without an encoding
+  proc.stdout.setEncoding('utf8')
+  proc.stderr.setEncoding('utf8')
   proc.stdout.on('data', chunk => (stdout += chunk))
   proc.stderr.on('data', chunk => (stderr += chunk))
   const code = await new Promise((resolve, reject) => {
@@ -41,11 +44,16 @@ async function ytDlpJson(url, extraFlags) {
   return JSON.parse(stdout)
 }
 
+// yt-dlp leaves <id>.<ext>.part (and legacy .ytdl) files behind mid-download; only a finished file may be played
+export function finishedAudioFile(files, id) {
+  return files.find(file => file.startsWith(`${id}.`) && !file.endsWith('.part') && !file.endsWith('.ytdl'))
+}
+
 async function downloadAudio(url, id) {
   await mkdir(AUDIO_DIR, { recursive: true })
   await cleanOldFiles()
 
-  const existing = (await readdir(AUDIO_DIR)).find(file => file.startsWith(`${id}.`))
+  const existing = finishedAudioFile(await readdir(AUDIO_DIR), id)
 
   if (existing)
     return existing
@@ -55,7 +63,7 @@ async function downloadAudio(url, id) {
   if (code !== 0)
     throw new Error(`yt-dlp failed to download ${url}: ${stderr.trim() || `exit ${code}`}`)
 
-  const file = (await readdir(AUDIO_DIR)).find(name => name.startsWith(`${id}.`))
+  const file = finishedAudioFile(await readdir(AUDIO_DIR), id)
 
   if (!file)
     throw new Error('yt-dlp downloaded audio but no file was found')
