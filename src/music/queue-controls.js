@@ -1,6 +1,7 @@
 import { clearPlaybackMessages, updateNowPlaying } from './now-playing.js'
+import { player } from './player.js'
 
-export const MUSIC_ACTIONS = ['pause', 'resume', 'radio', 'skip', 'shuffle', 'clear']
+export const MUSIC_ACTIONS = ['pause', 'resume', 'toggle', 'radio', 'skip', 'shuffle', 'clear']
 
 export function isPositionInQueue(queue, position) {
   return position > 0 && position <= queue.songs.length
@@ -20,15 +21,25 @@ export async function removeSongAt(queue, position) {
 
 export async function runMusicAction(queue, action) {
   switch (action) {
-    case 'pause':
-    case 'resume':
+    case 'toggle':
       await (queue.paused ? queue.resume() : queue.pause())
+      break
+    case 'pause':
+      if (!queue.paused)
+        await queue.pause()
+      break
+    case 'resume':
+      if (queue.paused)
+        await queue.resume()
       break
     case 'radio':
       queue.toggleAutoplay()
       await updateNowPlaying(queue, queue.songs[0])
       break
     case 'skip':
+      // songs is briefly empty during the autoplay transition while distube fetches the related song
+      if (!queue.songs.length)
+        break
       if (queue.songs.length > 1 || queue.autoplay) {
         await queue.skip()
       }
@@ -42,6 +53,8 @@ export async function runMusicAction(queue, action) {
     case 'clear':
       await queue.stop()
       await clearPlaybackMessages(queue.id)
+      // Queue#stop() neither disconnects nor emits finish; leave voice explicitly
+      player.voices.get(queue.id)?.leave()
       break
     default:
       // the deleted MusicAction union type enforced exhaustive cases; the throw
