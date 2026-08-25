@@ -17,4 +17,5 @@ export const MESSAGES = {
   personaTooLong: maxLength => `Keep it shorter than ${maxLength} characters, please.`,
   personaConfigured: 'Done, from now on I will talk like that.',
   djBusy: 'One moment, I am still getting your last request ready.',
+  djActed: 'Done.',
 }

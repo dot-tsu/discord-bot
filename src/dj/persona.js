@@ -33,6 +33,8 @@ function describeQueue(guildId) {
     `Playing now, at position 1: ${current.name}`,
     preview && `Up next:\n${preview}`,
     upcoming.length > UPCOMING_PREVIEW && `...and ${upcoming.length - UPCOMING_PREVIEW} more.`,
+    queue.paused && 'The music is paused right now.',
+    queue.autoplay && 'The radio is on: when the queue runs dry, related songs keep playing.',
   ].filter(Boolean).join('\n')
 }
 

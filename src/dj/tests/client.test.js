@@ -42,3 +42,11 @@ test('a request without tools sends neither key', async () => {
   expect(bodies[0].tools).toBeUndefined()
   expect(bodies[0].tool_choice).toBeUndefined()
 })
+
+test('a 200 response with no choices is an error', async () => {
+  process.env.OPENAI_BASE_URL = 'https://llm.example.com/v1/chat/completions'
+  process.env.OPENAI_API_KEY = 'test-key'
+  globalThis.fetch = async () => Response.json({ choices: [] })
+
+  await expect(requestCompletion({ messages: [{ role: 'user', content: 'que suena?' }], timeoutMs: 1000 })).rejects.toThrow(/no choices/)
+})

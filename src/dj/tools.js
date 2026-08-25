@@ -92,8 +92,8 @@ async function queueSongs(songs, context) {
 
   return {
     queued: resolved.length,
-    missing: wanted.length - resolved.length,
-    now_playing: resolved[0].name,
+    missing: songs.length - resolved.length,
+    first_added: resolved[0].name,
   }
 }
 
@@ -112,7 +112,7 @@ export async function runTool(name, args, context) {
 
     await runMusicAction(queue, args.action)
 
-    return { done: args.action }
+    return { done: args.action, paused: queue.paused, radio: queue.autoplay }
   }
 
   if (name === 'remove_song') {
